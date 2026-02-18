@@ -1,0 +1,1 @@
+Error: Directory migrations already exists and is not empty

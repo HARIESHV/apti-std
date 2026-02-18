@@ -1,11 +1,15 @@
 from flask import Flask, render_template, redirect, url_for, request, flash
 from flask_sqlalchemy import SQLAlchemy
+
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from datetime import datetime, timedelta
 import os
 from meet_utils import get_meet_info
 
 from werkzeug.utils import secure_filename
+import csv
+from io import StringIO
+from flask import send_file
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'your-secret-key-123')
@@ -45,6 +49,7 @@ except OSError:
     pass
 
 db = SQLAlchemy(app)
+
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
@@ -229,6 +234,102 @@ def register():
 def logout():
     logout_user()
     return redirect(url_for('login'))
+
+@app.route('/admin/export/submissions')
+@login_required
+def export_submissions():
+    if current_user.role != 'admin':
+        return redirect(url_for('student_dashboard'))
+    
+    submissions = Answer.query.order_by(Answer.submitted_at.desc()).all()
+    
+    output = StringIO()
+    fieldnames = [
+        'Submission ID', 'Student Name', 'Username', 'Question ID',
+        'Question Text', 'Selected Option', 'Answer Text',
+        'Correct Answer', 'Correct Answer Text', 'Is Correct', 'File Path', 'Submitted At'
+    ]
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer.writeheader()
+    
+    for s in submissions:
+        writer.writerow({
+            'Submission ID': s.id,
+            'Student Name': s.student.full_name if s.student else 'Unknown',
+            'Username': s.student.username if s.student else 'Unknown',
+            'Question ID': s.question_id,
+            'Question Text': s.question.text if s.question else 'Deleted Question',
+            'Selected Option': s.selected_option or 'N/A',
+            'Answer Text': (
+                s.question.option_a if s.selected_option == 'A' else
+                s.question.option_b if s.selected_option == 'B' else
+                s.question.option_c if s.selected_option == 'C' else
+                s.question.option_d if s.selected_option == 'D' else 'N/A'
+            ) if s.question and s.selected_option else 'N/A',
+            'Correct Answer': s.question.correct_answer if s.question else 'N/A',
+            'Correct Answer Text': (
+                s.question.option_a if s.question.correct_answer == 'A' else
+                s.question.option_b if s.question.correct_answer == 'B' else
+                s.question.option_c if s.question.correct_answer == 'C' else
+                s.question.option_d if s.question.correct_answer == 'D' else 'N/A'
+            ) if s.question else 'N/A',
+            'Is Correct': 'Yes' if s.is_correct else 'No',
+            'File Path': s.file_path if s.file_path else 'None',
+            'Submitted At': s.submitted_at.strftime('%Y-%m-%d %H:%M:%S')
+        })
+    
+    from io import BytesIO
+    output.seek(0)
+    bytes_output = BytesIO(output.getvalue().encode('utf-8-sig'))  # utf-8-sig for Excel compatibility
+    return send_file(
+        bytes_output,
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name=f'submissions_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+    )
+
+@app.route('/admin/export/members')
+@login_required
+def export_members():
+    if current_user.role != 'admin':
+        return redirect(url_for('student_dashboard'))
+    
+    members = User.query.filter_by(role='student').order_by(User.created_at.desc()).all()
+    
+    output = StringIO()
+    fieldnames = [
+        'User ID', 'Full Name', 'Username', 'Joined Date',
+        'Last Submission', 'Total Submissions', 'Correct Answers', 'Accuracy'
+    ]
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer.writeheader()
+    
+    for m in members:
+        total_submissions = len(m.answers)
+        correct_submissions = sum(1 for a in m.answers if a.is_correct)
+        accuracy = f"{(correct_submissions / total_submissions * 100):.1f}%" if total_submissions > 0 else "0%"
+        last_submission = max((a.submitted_at for a in m.answers if a.submitted_at), default=None)
+        
+        writer.writerow({
+            'User ID': m.id,
+            'Full Name': m.full_name or 'N/A',
+            'Username': m.username,
+            'Joined Date': m.created_at.strftime('%Y-%m-%d %H:%M:%S') if m.created_at else 'Unknown',
+            'Last Submission': last_submission.strftime('%Y-%m-%d %H:%M:%S') if last_submission else 'Never',
+            'Total Submissions': total_submissions,
+            'Correct Answers': correct_submissions,
+            'Accuracy': accuracy
+        })
+    
+    from io import BytesIO
+    output.seek(0)
+    bytes_output = BytesIO(output.getvalue().encode('utf-8-sig'))  # utf-8-sig for Excel compatibility
+    return send_file(
+        bytes_output,
+        mimetype='text/csv',
+        as_attachment=True,
+        download_name=f'members_export_{datetime.now().strftime("%Y%m%d_%H%M%S")}.csv'
+    )
 
 @app.route('/admin/dashboard')
 @login_required
