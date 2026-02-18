@@ -1,0 +1,76 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="animate-fade-in" style="margin-bottom: 2rem;">
+    <h1 style="font-size: 2.228rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -1px;">
+        Latest <span class="text-gradient">Submissions</span>
+    </h1>
+    <p style="color: var(--text-dim);">Review student performance and solutions.</p>
+</div>
+
+<div class="card" style="border-left: 5px solid var(--accent); padding: 0; overflow: hidden;">
+    <table style="width: 100%; border-collapse: collapse; text-align: left;">
+        <thead>
+            <tr style="background: rgba(255,255,255,0.03);">
+                <th style="padding: 1.25rem;">Student</th>
+                <th style="padding: 1.25rem;">Question</th>
+                <th style="padding: 1.25rem;">Result</th>
+                <th style="padding: 1.25rem;">Solution</th>
+                <th style="padding: 1.25rem;">Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for r in results %}
+            <tr style="border-top: 1px solid rgba(255,255,255,0.05);">
+                <td style="padding: 1.25rem;">
+                    <div style="font-weight: 600;">{{ r.student.username }}</div>
+                </td>
+                <td
+                    style="padding: 1.25rem; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                    {{ r.question.text }}
+                </td>
+                <td style="padding: 1.25rem;">
+                    <span class="status-badge {{ 'correct' if r.is_correct else 'incorrect' }}">
+                        {{ 'CORRECT' if r.is_correct else 'INCORRECT' }}
+                    </span>
+                </td>
+                <td style="padding: 1.25rem;">
+                    {% if r.file_path %}
+                    <a href="{{ url_for('download_file', filename=r.file_path) }}" target="_blank" class="btn"
+                        style="color: var(--primary); background: rgba(99, 102, 241, 0.1); padding: 0.4rem 0.8rem; font-size: 0.75rem;">View
+                        Doc</a>
+                    {% endif %}
+                </td>
+                <td style="padding: 1.25rem; font-size: 0.8rem; color: var(--text-dim);">
+                    {{ r.submitted_at.strftime('%m/%d %H:%M') }}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% if not results %}
+    <div style="padding: 4rem; text-align: center; color: var(--text-dim);">No submissions yet.</div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .status-badge {
+        font-weight: 800;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 0.75rem;
+    }
+
+    .status-badge.correct {
+        color: var(--accent);
+        background: rgba(16, 185, 129, 0.1);
+    }
+
+    .status-badge.incorrect {
+        color: var(--danger);
+        background: rgba(239, 68, 68, 0.1);
+    }
+</style>
+{% endblock %}

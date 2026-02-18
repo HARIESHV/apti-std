@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AptitudePro - Student & Admin Portal</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Outfit:wght@300;400;600;800&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        nav {
+            padding: 1.25rem 2.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(7, 9, 14, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--glass-border);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+
+        .logo {
+            font-size: 1.6rem;
+            font-weight: 800;
+            text-decoration: none;
+            letter-spacing: -0.5px;
+            background: linear-gradient(135deg, #818cf8 0%, #c084fc 100%);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .nav-links a {
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            font-size: 0.95rem;
+            position: relative;
+        }
+
+        .nav-links a:hover {
+            color: var(--text-main);
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0%;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 3rem auto;
+            padding: 0 1.5rem;
+            flex-grow: 1;
+        }
+
+        .card {
+            background: var(--card-bg);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border: 1px solid var(--card-border);
+            border-radius: 1.5rem;
+            padding: 2.5rem;
+            margin-bottom: 2.5rem;
+            transition: transform 0.3s ease, border-color 0.3s ease;
+        }
+
+        .card:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            transform: translateY(-2px);
+        }
+
+        .flash-messages {
+            margin-bottom: 2rem;
+        }
+
+        .flash {
+            padding: 1.25rem;
+            border-radius: 1rem;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--accent);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 500;
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                padding: 1rem 1.5rem;
+            }
+
+            .nav-links {
+                display: none;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <nav>
+        <a href="/" class="logo">AptitudePro</a>
+        <div class="nav-links">
+            {% if current_user.is_authenticated %}
+            {% if current_user.role == 'admin' %}
+            <a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a>
+            {% else %}
+            <a href="{{ url_for('student_dashboard') }}">Student Hub</a>
+            {% endif %}
+            <a href="{{ url_for('logout') }}">Logout</a>
+            {% else %}
+            <a href="{{ url_for('login') }}">Login</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <div class="container">
+        {% with messages = get_flashed_messages() %}
+        {% if messages %}
+        <div class="flash-messages">
+            {% for message in messages %}
+            <div class="flash">{{ message }}</div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </div>
+
+    <footer
+        style="text-align: center; padding: 2rem; color: var(--text-dim); border-top: 1px solid rgba(255, 255, 255, 0.1);">
+        &copy; 2026 AptitudePro - Empowering Learning
+    </footer>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

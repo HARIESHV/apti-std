@@ -1,0 +1,248 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="animate-fade-in"
+    style="margin-bottom: 3.5rem; display: flex; justify-content: space-between; align-items: flex-end;">
+    <div>
+        <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -1px;">
+            Admin <span class="text-gradient">Control Center</span>
+        </h1>
+        <p style="color: var(--text-dim); font-size: 1.1rem;">Manage classrooms, links, and student assignments.</p>
+    </div>
+    <a href="{{ url_for('post_question') }}" class="btn btn-primary"
+        style="padding: 0.75rem 1.5rem; margin-bottom: 5px;">
+        <svg style="width:20px; height:20px" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+        </svg>
+        Post New Question
+    </a>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: start; margin-bottom: 3.5rem;">
+    <div style="display: grid; gap: 2.5rem;">
+        <!-- Classroom Management Section -->
+        <div class="card" style="border-left: 5px solid var(--accent); position: relative;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div
+                        style="width: 40px; height: 40px; background: rgba(16, 185, 129, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--accent);">
+                        <svg style="width:24px; height:24px" viewBox="0 0 24 24">
+                            <path fill="currentColor"
+                                d="M12,3L1,9L12,15L21,10.09V17H23V9M5,13.18V17.18L12,21L19,17.18V13.18L12,17L5,13.18Z" />
+                        </svg>
+                    </div>
+                    <h2 style="font-size: 1.5rem; font-weight: 700;">Classroom Status</h2>
+                </div>
+                <div style="display: flex; gap: 1rem; align-items: center;">
+                    <a href="{{ url_for('refresh_classroom') }}" class="btn"
+                        style="padding: 0.5rem 1rem; background: rgba(255,255,255,0.05); color: var(--text-dim); font-size: 0.85rem;">
+                        <svg style="width:16px; height:16px" viewBox="0 0 24 24">
+                            <path fill="currentColor"
+                                d="M17.65,6.35C16.2,4.9 14.21,4 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20C15.73,20 18.84,17.45,19.73,14H17.65C16.83,16.33 14.61,18 12,18A6,6 0 0,1 6,12A6,6 0 0,1 12,6C13.66,6 15.14,6.69 16.22,7.78L13,11H20V4L17.65,6.35Z" />
+                        </svg>
+                        Refresh Link
+                    </a>
+                    {% if classroom and classroom.is_live %}
+                    <div
+                        style="background: rgba(16, 185, 129, 0.1); color: var(--accent); padding: 0.5rem 1.25rem; border-radius: 2rem; font-weight: 700; font-size: 0.85rem; display: flex; align-items: center; gap: 8px;">
+                        <div class="live-indicator"
+                            style="background: var(--accent); box-shadow: 0 0 10px var(--accent);"></div>
+                        LIVE
+                    </div>
+                    {% else %}
+                    <div
+                        style="background: rgba(255, 255, 255, 0.05); color: var(--text-dim); padding: 0.5rem 1.25rem; border-radius: 2rem; font-weight: 700; font-size: 0.85rem;">
+                        OFFLINE
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <form action="{{ url_for('update_classroom') }}" method="POST" style="display: grid; gap: 1.5rem;">
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.75rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 600;">Global
+                        Meeting Link</label>
+                    <input type="url" name="meet_link" value="{{ classroom.active_meet_link if classroom else '' }}"
+                        placeholder="https://meet.google.com/abc-defg-hij" pattern="https://meet\.(google\.com|new)/.*">
+                    {% if classroom and classroom.detected_title %}
+                    <p style="margin-top: 0.5rem; font-size: 0.75rem; color: var(--primary);">Currently Tracking:
+                        <strong>{{ classroom.detected_title }}</strong>
+                    </p>
+                    {% endif %}
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <label class="toggle-container"
+                        style="display: flex; align-items: center; gap: 12px; cursor: pointer;">
+                        <input type="checkbox" name="is_live" {% if classroom and classroom.is_live %}checked{% endif %}
+                            style="width: 20px; height: 20px; accent-color: var(--primary);">
+                        <span style="font-weight: 600;">Broadcast as Live Classroom</span>
+                    </label>
+                    <button type="submit" class="btn btn-primary">Update Status</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- System Settings Section -->
+        <div class="card" style="border-left: 5px solid #f59e0b;">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 2rem;">
+                <div
+                    style="width: 40px; height: 40px; background: rgba(245, 158, 11, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #f59e0b;">
+                    <svg style="width:24px; height:24px" viewBox="0 0 24 24">
+                        <path fill="currentColor"
+                            d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.35 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.97 19.05,5.05L16.56,6.05C16.04,5.65 15.48,5.32 14.87,5.07L14.49,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.51,2.42L9.13,5.07C8.52,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.97 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.35 4.5,12.33 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.95C7.96,18.34 8.52,18.68 9.13,18.93L9.51,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.49,21.58L14.87,18.93C15.48,18.67 16.04,18.34 16.56,17.95L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
+                    </svg>
+                </div>
+                <h2 style="font-size: 1.5rem; font-weight: 700;">System Settings</h2>
+            </div>
+
+            <form action="{{ url_for('update_config') }}" method="POST" style="display: grid; gap: 1.5rem;">
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.75rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 600;">Max
+                        Website Members</label>
+                    <div style="display: flex; gap: 1rem; align-items: center;">
+                        <input type="number" name="max_members" value="{{ config.max_members if config else 50 }}"
+                            min="1" required style="width: 100px;">
+                        <span style="color: var(--text-dim); font-size: 0.85rem;">Currently: <strong>{{
+                                all_users|length }}</strong> registered</span>
+                    </div>
+                </div>
+                <div style="text-align: right;">
+                    <button type="submit" class="btn btn-primary"
+                        style="background: #f59e0b; border-color: #f59e0b;">Save Configuration</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div style="display: grid; gap: 2.5rem;">
+        <!-- Meet Link Library -->
+        <div class="card" style="border-left: 5px solid var(--primary);">
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 2rem;">
+                <div
+                    style="width: 40px; height: 40px; background: rgba(99, 102, 241, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+                    <svg style="width:24px; height:24px" viewBox="0 0 24 24">
+                        <path fill="currentColor"
+                            d="M3.9,12C3.9,10.29 5.29,8.9 7,8.9H11V7H7A5,5 0 0,0 2,12A5,5 0 0,0 7,17H11V15.1H7C5.29,15.1 3.9,13.71 3.9,12M8,13H16V11H8V13M17,7H13V8.9H17C18.71,8.9 20.1,10.29 20.1,12C20.1,13.71 18.71,15.1 17,15.1H13V17H17A5,5 0 0,0 22,12A5,5 0 0,0 17,7Z" />
+                    </svg>
+                </div>
+                <h2 style="font-size: 1.5rem; font-weight: 700;">Meeting Library</h2>
+            </div>
+
+            <form action="{{ url_for('add_meet_link') }}" method="POST"
+                style="display: grid; grid-template-columns: 1fr 1.5fr auto; gap: 1rem; margin-bottom: 2.5rem; align-items: end;">
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Session
+                        Label</label>
+                    <input type="text" name="label" required placeholder="Morning Standup">
+                </div>
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Meet
+                        URL</label>
+                    <input type="url" name="url" required placeholder="https://meet.google.com/...">
+                </div>
+                <button type="submit" class="btn btn-primary" style="height: 48px;">Add</button>
+            </form>
+
+            <div style="display: grid; gap: 1rem; max-height: 400px; overflow-y: auto; padding-right: 5px;">
+                {% for link in meet_links %}
+                <div class="glass-panel"
+                    style="padding: 1.25rem; background: rgba(255,255,255,0.02); display: flex; justify-content: space-between; align-items: center;">
+                    <div style="max-width: 60%;">
+                        <div style="font-weight: 700; color: var(--text-main); margin-bottom: 4px;">{{ link.label }}
+                        </div>
+                        <div
+                            style="color: var(--primary); font-size: 0.8rem; text-decoration: none; word-break: break-all;">
+                            {{ link.url }}</div>
+                    </div>
+                    <div style="display: flex; gap: 0.75rem;">
+                        <form action="{{ url_for('toggle_meet_link', link_id=link.id) }}" method="POST">
+                            <button type="submit" class="btn btn-status {{ 'active' if link.is_active else 'paused' }}">
+                                {{ 'ACTIVE' if link.is_active else 'PAUSED' }}
+                            </button>
+                        </form>
+                        <form action="{{ url_for('delete_meet_link', link_id=link.id) }}" method="POST"
+                            onsubmit="return confirm('Delete this link?')">
+                            <button type="submit" class="btn"
+                                style="padding: 0.4rem 0.8rem; font-size: 0.75rem; background: rgba(239, 68, 68, 0.1); color: var(--danger);">Delete</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Dashboards Quick Access (Moved to Downside) -->
+<div
+    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+    <a href="{{ url_for('admin_questions_dashboard') }}" class="card glass-panel"
+        style="text-decoration: none; display: flex; align-items: center; gap: 1.25rem; padding: 1.25rem 1.5rem; border-top: 4px solid var(--primary); transition: transform 0.3s ease; margin-bottom: 0;">
+        <div
+            style="width: 40px; height: 40px; background: rgba(99, 102, 241, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+            <svg style="width:20px; height:20px" viewBox="0 0 24 24">
+                <path fill="currentColor"
+                    d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,13H13V15H11V13M11,7H13V11H11V7Z" />
+            </svg>
+        </div>
+        <div>
+            <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-main);">Active Questions</div>
+            <div style="font-size: 0.8rem; color: var(--text-dim);">{{ questions|length }} Total Challenges</div>
+        </div>
+    </a>
+
+    <a href="{{ url_for('admin_submissions_dashboard') }}" class="card glass-panel"
+        style="text-decoration: none; display: flex; align-items: center; gap: 1.25rem; padding: 1.25rem 1.5rem; border-top: 4px solid var(--accent); transition: transform 0.3s ease; margin-bottom: 0;">
+        <div
+            style="width: 40px; height: 40px; background: rgba(16, 185, 129, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--accent);">
+            <svg style="width:20px; height:20px" viewBox="0 0 24 24">
+                <path fill="currentColor"
+                    d="M14,10H19.5L14,4.5V10M5,3H15L21,9V19A2,2 0 0,1 19,21H5C3.89,21 3,20.1 3,19V5C3,3.89 3.89,3 5,3M5,5V19H19V12H12V5H5Z" />
+            </svg>
+        </div>
+        <div>
+            <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-main);">Latest Submissions</div>
+            <div style="font-size: 0.8rem; color: var(--text-dim);">Student Solutions</div>
+        </div>
+    </a>
+
+    <a href="{{ url_for('admin_members_dashboard') }}" class="card glass-panel"
+        style="text-decoration: none; display: flex; align-items: center; gap: 1.25rem; padding: 1.25rem 1.5rem; border-top: 4px solid var(--secondary); transition: transform 0.3s ease; margin-bottom: 0;">
+        <div
+            style="width: 40px; height: 40px; background: rgba(139, 92, 246, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--secondary);">
+            <svg style="width:20px; height:20px" viewBox="0 0 24 24">
+                <path fill="currentColor"
+                    d="M16,13C15.71,13 15.38,13 15.03,13.05C16.19,13.89 17,15 17,16.5V19H23V16.5C23,14.17 18.33,13 16,13M8,13C5.67,13 1,14.17 1,16.5V19H15V16.5C15,14.17 10.33,13 8,13M8,11A3,3 0 0,0 11,8A3,3 0 0,0 8,5A3,3 0 0,0 5,8A3,3 0 0,0 8,11M16,11A3,3 0 0,0 19,8A3,3 0 0,0 16,5A3,3 0 0,0 13,8A3,3 0 0,0 16,11Z" />
+            </svg>
+        </div>
+        <div>
+            <div style="font-weight: 800; font-size: 1.1rem; color: var(--text-main);">College Members</div>
+            <div style="font-size: 0.8rem; color: var(--text-dim);">{{ all_users|length }} Registered</div>
+        </div>
+    </a>
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .btn-status {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.75rem;
+    }
+
+    .btn-status.active {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--accent);
+    }
+
+    .btn-status.paused {
+        background: rgba(255, 255, 255, 0.05);
+        color: var(--text-dim);
+    }
+</style>
+{% endblock %}

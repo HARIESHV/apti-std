@@ -1,0 +1,63 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="animate-fade-in"
+    style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h1 style="font-size: 2.228rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -1px;">
+            Question <span class="text-gradient">Management</span>
+        </h1>
+        <p style="color: var(--text-dim);">Manage active and expired challenges.</p>
+    </div>
+    <a href="{{ url_for('post_question') }}" class="btn btn-primary">Add Question</a>
+</div>
+
+<div style="display: grid; gap: 2.5rem;">
+    <div class="card" style="border-top: 5px solid var(--primary);">
+        <h2
+            style="margin-bottom: 2rem; font-weight: 800; display: flex; align-items: center; gap: 12px; color: var(--primary);">
+            Active Questions
+        </h2>
+        <div style="display: grid; gap: 1rem;">
+            {% for q in active_questions %}
+            <div class="glass-panel"
+                style="padding: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <div style="font-weight: 600;">{{ q.text }}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 4px;">Key: {{ q.correct_answer }}
+                    </div>
+                </div>
+                <form action="{{ url_for('delete_question', question_id=q.id) }}" method="POST"
+                    onsubmit="return confirm('Delete?')">
+                    <button type="submit" class="btn"
+                        style="color: var(--danger); background: rgba(239, 68, 68, 0.1); padding: 0.5rem;">Delete</button>
+                </form>
+            </div>
+            {% endfor %}
+            {% if not active_questions %}
+            <p style="text-align: center; color: var(--text-dim); padding: 2rem;">No active questions.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="card" style="border-top: 5px solid #64748b;">
+        <h2 style="margin-bottom: 2rem; font-weight: 800; color: #64748b;">Previous Challenges</h2>
+        <div style="display: grid; gap: 1rem;">
+            {% for q in expired_questions %}
+            <div class="glass-panel"
+                style="padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; opacity: 0.7;">
+                <div>
+                    <div style="font-weight: 600;">{{ q.text }}</div>
+                    <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 4px;">Key: {{ q.correct_answer }}
+                    </div>
+                </div>
+                <form action="{{ url_for('delete_question', question_id=q.id) }}" method="POST">
+                    <button type="submit" class="btn"
+                        style="color: var(--danger); background: rgba(239, 68, 68, 0.05); padding: 0.5rem;">Delete</button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endblock %}

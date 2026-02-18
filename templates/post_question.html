@@ -1,0 +1,160 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="animate-fade-in" style="max-width: 800px; margin: 2rem auto;">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem;">
+        <div>
+            <h1 style="font-size: 2.228rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -1px;">
+                Post New <span class="text-gradient">Question</span>
+            </h1>
+            <p style="color: var(--text-dim);">Add a new challenge for the students.</p>
+        </div>
+        <a href="{{ url_for('admin_dashboard') }}" class="btn"
+            style="background: rgba(255,255,255,0.05); color: var(--text-dim);">
+            <svg style="width:20px; height:20px" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
+            </svg>
+            Back to Dashboard
+        </a>
+    </div>
+
+    <div class="card" style="border-left: 5px solid var(--primary);">
+        <form action="{{ url_for('post_question') }}" method="POST" enctype="multipart/form-data"
+            style="display: grid; gap: 1.5rem;">
+            <div>
+                <label
+                    style="display: block; margin-bottom: 0.75rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 600;">Question
+                    Text</label>
+                <textarea name="text" required placeholder="What is the capital of France?"
+                    style="min-height: 120px;"></textarea>
+            </div>
+
+            <div>
+                <label
+                    style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Question
+                    Image (Optional)</label>
+                <div class="glass-panel"
+                    style="padding: 1rem; position: relative; border: 1px dashed var(--glass-border);">
+                    <input type="file" name="image" id="imageInput" accept="image/*"
+                        style="width: 100%; cursor: pointer;">
+                    <div id="imagePreview" style="margin-top: 1rem; display: none; text-align: center;">
+                        <span
+                            style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; color: var(--primary); font-weight: bold;">PREVIEW</span>
+                        <img id="previewImg" src=""
+                            style="max-width: 100%; max-height: 250px; border-radius: 12px; border: 1px solid var(--glass-border);">
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Option
+                        A</label>
+                    <input type="text" name="option_a" required placeholder="Ex: Paris">
+                </div>
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Option
+                        B</label>
+                    <input type="text" name="option_b" required placeholder="Ex: London">
+                </div>
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Option
+                        C</label>
+                    <input type="text" name="option_c" required placeholder="Ex: Berlin">
+                </div>
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Option
+                        D</label>
+                    <input type="text" name="option_d" required placeholder="Ex: Madrid">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Correct
+                        Answer</label>
+                    <select name="correct_answer" required>
+                        <option value="A">Option A</option>
+                        <option value="B">Option B</option>
+                        <option value="C">Option C</option>
+                        <option value="D">Option D</option>
+                    </select>
+                </div>
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Time
+                        Limit</label>
+                    <div style="display: flex; gap: 0.5rem;">
+                        <input type="number" name="time_limit" value="10" min="1" required style="flex: 2;">
+                        <select name="time_unit" required id="unitSelector"
+                            style="flex: 1; background: rgba(99, 102, 241, 0.15); border: 1.5px solid var(--primary); font-weight: 700; color: white;">
+                            <option value="minutes">Minutes</option>
+                            <option value="days">Days</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <div>
+                <label
+                    style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Explanation
+                    (Optional)</label>
+                <textarea name="explanation" placeholder="Provide a brief explanation for the correct answer..."
+                    style="min-height: 80px;"></textarea>
+            </div>
+
+            <div style="text-align: right; margin-top: 1rem;">
+                <button type="submit" class="btn btn-primary"
+                    style="padding: 1rem 3rem; font-weight: 700; font-size: 1rem;">
+                    Post Question
+                    <svg style="width:20px; height:20px" viewBox="0 0 24 24">
+                        <path fill="currentColor"
+                            d="M14,13V17H10V13H7L12,8L17,13M19.35,10.03C18.67,6.59 15.64,4 12,4C9.11,4 6.6,5.64 5.35,8.03C2.34,8.36 0,10.9 0,14A6,6 0 0,0 6,20H19A5,5 0 0,0 24,15C24,12.36 21.95,10.22 19.35,10.03Z" />
+                    </svg>
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% block extra_js %}
+<script>
+    const imageInput = document.getElementById('imageInput');
+    const imagePreview = document.getElementById('imagePreview');
+    const previewImg = document.getElementById('previewImg');
+
+    imageInput.addEventListener('change', function () {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                previewImg.src = e.target.result;
+                imagePreview.style.display = 'block';
+            }
+            reader.readAsDataURL(file);
+        } else {
+            imagePreview.style.display = 'none';
+        }
+    });
+
+    // Dynamic Unit Selector Color
+    const unitSelector = document.getElementById('unitSelector');
+    function updateUnitColor() {
+        if (unitSelector.value === 'days') {
+            unitSelector.style.background = 'rgba(16, 185, 129, 0.15)'; // Emerald/Green
+            unitSelector.style.borderColor = 'var(--accent)';
+        } else {
+            unitSelector.style.background = 'rgba(99, 102, 241, 0.15)'; // Indigo/Purple
+            unitSelector.style.borderColor = 'var(--primary)';
+        }
+    }
+    unitSelector.addEventListener('change', updateUnitColor);
+    updateUnitColor(); // Initial run
+</script>
+{% endblock %}
+{% endblock %}

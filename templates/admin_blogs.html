@@ -1,0 +1,37 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="animate-fade-in"
+    style="margin-bottom: 2.5rem; display: flex; justify-content: space-between; align-items: center;">
+    <div>
+        <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -1px;">
+            Manage <span class="text-gradient">Blogs</span>
+        </h1>
+        <p style="color: var(--text-dim); font-size: 1.1rem;">Manage announcements and site content.</p>
+    </div>
+    <a href="{{ url_for('post_blog') }}" class="btn" style="background: #ec4899; color: white;">New Post</a>
+</div>
+
+<div class="card" style="border-left: 5px solid #ec4899;">
+    {% if blogs %}
+    <div style="display: grid; gap: 1.5rem;">
+        {% for b in blogs %}
+        <div class="glass-panel"
+            style="padding: 1.5rem; display: flex; justify-content: space-between; align-items: start;">
+            <div>
+                <h3 style="font-size: 1.3rem; font-weight: 800; margin-bottom: 0.5rem;">{{ b.title }}</h3>
+                <p style="color: var(--text-dim); font-size: 0.9rem;">{{ b.created_at.strftime('%B %d, %Y') }}</p>
+                <p style="margin-top: 1rem; color: var(--text-dim); line-height: 1.6;">{{ b.content[:200] }}...</p>
+            </div>
+            <form action="{{ url_for('delete_blog', blog_id=b.id) }}" method="POST">
+                <button type="submit" class="btn"
+                    style="color: var(--danger); background: rgba(239, 68, 68, 0.1); padding: 0.5rem;">Delete</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p style="text-align: center; color: var(--text-dim); padding: 3rem;">No blog posts yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

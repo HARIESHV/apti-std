@@ -1,0 +1,389 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="animate-fade-in"
+    style="margin-bottom: 3rem; display: flex; justify-content: space-between; align-items: flex-end; flex-wrap: wrap; gap: 2rem;">
+    <div>
+        <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -1px;">
+            Hello, <span class="text-gradient">{{ current_user.full_name or current_user.username }}</span>!
+        </h1>
+        <p style="color: var(--text-dim); font-size: 1.1rem;">Ready to sharpen your skills today?</p>
+    </div>
+
+    {% if classroom and classroom.is_live %}
+    <div class="glass-panel"
+        style="padding: 1.5rem 2rem; display: flex; align-items: center; gap: 1.5rem; border-left: 4px solid #ef4444; background: rgba(239, 68, 68, 0.05);">
+        <div style="position: relative;">
+            <div class="live-indicator" style="position: absolute; top: -5px; right: -5px;"></div>
+            <div
+                style="width: 50px; height: 50px; background: rgba(239, 68, 68, 0.1); border-radius: 12px; display: flex; align-items: center; justify-content: center;">
+                <svg style="width:28px; height:28px; color: #ef4444;" viewBox="0 0 24 24">
+                    <path fill="currentColor"
+                        d="M17,10.5V7A1,1 0 0,0 16,6H4A1,1 0 0,0 3,7V17A1,1 0 0,0 4,18H16A1,1 0 0,0 17,17V13.5L21,17.5V6.5L17,10.5Z" />
+                </svg>
+            </div>
+        </div>
+        <div>
+            <h3 style="margin: 0; font-weight: 700; color: #f8fafc; font-size: 1.1rem;">Live Session Active</h3>
+            <p style="margin: 2px 0 12px 0; color: var(--text-dim); font-size: 0.85rem;">Interactive learning in
+                progress</p>
+            <a href="{{ classroom.active_meet_link }}" target="_blank" class="btn btn-primary"
+                style="padding: 0.5rem 1.25rem; font-size: 0.85rem; background: #ef4444; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);">
+                Join Session
+            </a>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+{% if active_meet_links %}
+<div class="card"
+    style="margin-bottom: 3rem; background: rgba(99, 102, 241, 0.03); border-color: rgba(99, 102, 241, 0.1);">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem;">
+        <div
+            style="width: 32px; height: 32px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+            <svg style="width:20px; height:20px" viewBox="0 0 24 24">
+                <path fill="currentColor"
+                    d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M6,10V7H4V10H1V12H4V15H6V12H9V10M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12Z" />
+            </svg>
+        </div>
+        <h2 style="font-size: 1.25rem; font-weight: 700;">Ongoing Discussion Rooms</h2>
+    </div>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem;">
+        {% for link in active_meet_links %}
+        <div class="glass-panel"
+            style="padding: 1.25rem; background: rgba(255, 255, 255, 0.02); display: flex; justify-content: space-between; align-items: center; transition: background 0.3s;">
+            <div>
+                <div style="font-weight: 600; color: var(--text-main); margin-bottom: 4px;">{{ link.label }}</div>
+                <div
+                    style="font-size: 0.75rem; color: var(--accent); font-weight: 700; display: flex; align-items: center; gap: 5px;">
+                    <div class="live-indicator" style="background: var(--accent); box-shadow: 0 0 8px var(--accent);">
+                    </div>
+                    LIVE NOW
+                </div>
+            </div>
+            <a href="{{ link.url }}" target="_blank" class="btn btn-primary"
+                style="padding: 0.5rem 1rem; font-size: 0.8rem;">Join</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<div style="display: grid; gap: 2.5rem;">
+    {% for q in questions %}
+    <div class="card animate-fade-in" style="margin-bottom: 0; position: relative;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+            <div style="display: flex; gap: 1.5rem;">
+                <div
+                    style="width: 40px; height: 40px; background: rgba(255,255,255,0.05); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--primary); flex-shrink: 0;">
+                    Q{{ loop.index }}
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 1rem;">
+                    <h3
+                        style="font-weight: 600; font-size: 1.3rem; line-height: 1.5; color: var(--text-main); margin: 0;">
+                        {{ q.text }}
+                    </h3>
+                    {% if q.image_file %}
+                    <div>
+                        <img src="{{ url_for('static', filename='question_images/' + q.image_file) }}"
+                            alt="Question Diagram"
+                            style="max-width: 100%; max-height: 400px; border-radius: 12px; border: 1px solid var(--glass-border); display: block;">
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            {% if q.id in user_answers %}
+            {% set ans = user_answers[q.id] %}
+            <div class="submission-status {{ 'correct' if ans.is_correct else 'incorrect' }}">
+                {{ 'Correct' if ans.is_correct else 'Incorrect' }}
+            </div>
+            {% else %}
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                {% set created_ts = q.created_at.timestamp() if q.created_at else 0 %}
+                {% set limit_mins = q.time_limit if q.time_limit else 10 %}
+                <div class="timer-display" data-end-time="{{ (created_ts + limit_mins * 60) * 1000 }}"
+                    id="timer-{{ q.id }}"
+                    style="display: flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; background: rgba(99, 102, 241, 0.1); color: var(--primary);">
+                    <svg style="width:16px; height:16px" viewBox="0 0 24 24">
+                        <path fill="currentColor"
+                            d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+                    </svg>
+                    <span class="time-left">--:--</span>
+                </div>
+                <span style="font-size: 0.7rem; color: var(--text-dim);">
+                    Time limit:
+                    {% if q.time_limit >= 1440 %}
+                    {{ (q.time_limit / 1440) | round(1) }} days
+                    {% elif q.time_limit >= 60 %}
+                    {{ (q.time_limit / 60) | round(1) }} hours
+                    {% else %}
+                    {{ q.time_limit }} min
+                    {% endif %}
+                </span>
+            </div>
+            {% endif %}
+        </div>
+
+        {% if q.id not in user_answers %}
+        <form action="{{ url_for('submit_answer') }}" method="POST" enctype="multipart/form-data">
+            <input type="hidden" name="question_id" value="{{ q.id }}">
+            <div
+                style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                {% for label, text in [('A', q.option_a), ('B', q.option_b), ('C', q.option_c), ('D', q.option_d)] %}
+                <label class="option-container">
+                    <input type="radio" name="selected_option" value="{{ label }}">
+                    <div class="option-box">
+                        <span style="font-weight: 800; margin-right: 10px; color: var(--primary);">{{ label }}</span>
+                        {{ text }}
+                    </div>
+                </label>
+                {% endfor %}
+            </div>
+
+            <div
+                style="background: rgba(255,255,255,0.02); border: 1px dashed var(--glass-border); padding: 1.5rem; border-radius: 1rem; margin-bottom: 2rem;">
+                <label
+                    style="display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 600;">
+                    <svg style="width:20px; height:20px" viewBox="0 0 24 24">
+                        <path fill="currentColor"
+                            d="M14,2L20,8V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V4A2,2 0 0,1 6,2H14M13,3.5V9H18.5L13,3.5M7,11V13H17V11H7M7,15V17H14V15H7Z" />
+                    </svg>
+                    Upload Detailed Solution (PDF/DOCX)
+                </label>
+                <input type="file" name="file" accept=".pdf,.docx">
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+                {% if q.meet_link %}
+                <a href="{{ q.meet_link }}" target="_blank" class="meet-btn">
+                    <svg style="width:20px; height:20px" viewBox="0 0 24 24">
+                        <path fill="currentColor"
+                            d="M17,10.5V7A1,1 0 0,0 16,6H4A1,1 0 0,0 3,7V17A1,1 0 0,0 4,18H16A1,1 0 0,0 17,17V13.5L21,17.5V6.5L17,10.5Z" />
+                    </svg>
+                    Join Discussion
+                </a>
+                {% else %}
+                <div></div>
+                {% endif %}
+                <button type="submit" class="btn btn-primary">Submit My Response</button>
+            </div>
+        </form>
+        {% else %}
+        <div style="border-top: 1px solid var(--glass-border); padding-top: 1.5rem;">
+            {% set ans = user_answers[q.id] %}
+            <div class="glass-panel" style="padding: 1.5rem; background: rgba(255, 255, 255, 0.01);">
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.95rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                        <span style="color: var(--text-dim);">Your Answer:
+                            <strong style="color: var(--text-main);">
+                                {% if ans.selected_option == 'A' %}{{ q.option_a }}
+                                {% elif ans.selected_option == 'B' %}{{ q.option_b }}
+                                {% elif ans.selected_option == 'C' %}{{ q.option_c }}
+                                {% elif ans.selected_option == 'D' %}{{ q.option_d }}
+                                {% else %}File Upload{% endif %}
+                            </strong>
+                            {% if ans.selected_option %}({{ ans.selected_option }}){% endif %}
+                        </span>
+                        <span style="color: var(--accent); font-weight: 700; text-align: right;">
+                            Correct:
+                            {% if q.correct_answer == 'A' %}{{ q.option_a }}
+                            {% elif q.correct_answer == 'B' %}{{ q.option_b }}
+                            {% elif q.correct_answer == 'C' %}{{ q.option_c }}
+                            {% elif q.correct_answer == 'D' %}{{ q.option_d }}
+                            {% endif %}
+                            ({{ q.correct_answer }})
+                        </span>
+                    </div>
+                </div>
+                {% if q.explanation %}
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                    <strong
+                        style="color: var(--primary); display: block; margin-bottom: 0.5rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Explanation</strong>
+                    <p style="color: var(--text-dim); line-height: 1.6; margin: 0;">{{ q.explanation }}</p>
+                </div>
+                {% endif %}
+            </div>
+
+            {% if q.meet_link %}
+            <div style="margin-top: 1.5rem;">
+                <a href="{{ q.meet_link }}" target="_blank"
+                    style="color: var(--primary); text-decoration: none; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 600;">
+                    Join the post-submission review session &rarr;
+                </a>
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    {% endfor %}
+
+    {% if not questions %}
+    <div class="card"
+        style="text-align: center; padding: 6rem 0; border: 2px dashed var(--glass-border); background: transparent;">
+        <div
+            style="width: 80px; height: 80px; background: var(--glass-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; color: var(--text-dim);">
+            <svg style="width:40px; height:40px" viewBox="0 0 24 24">
+                <path fill="currentColor"
+                    d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z" />
+            </svg>
+        </div>
+        <h2 style="color: var(--text-main); font-weight: 700;">No questions available yet</h2>
+        <p style="color: var(--text-dim);">Stay tuned! New challenges will appear here soon.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .option-container {
+        cursor: pointer;
+        display: block;
+    }
+
+    .option-container input {
+        display: none;
+    }
+
+    .option-box {
+        padding: 1.25rem;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--glass-border);
+        border-radius: 1rem;
+        transition: all 0.3s ease;
+        color: var(--text-dim);
+        font-weight: 500;
+        height: 100%;
+    }
+
+    .option-container input:checked+.option-box {
+        background: rgba(99, 102, 241, 0.1);
+        border-color: var(--primary);
+        color: var(--text-main);
+        box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+        transform: scale(1.02);
+    }
+
+    .option-box:hover:not(input:checked + .option-box) {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .meet-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--accent);
+        padding: 0.8rem 1.5rem;
+        border-radius: 0.75rem;
+        text-decoration: none;
+        font-weight: 700;
+        transition: all 0.3s;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        font-size: 0.9rem;
+    }
+
+    .meet-btn:hover {
+        background: rgba(16, 185, 129, 0.2);
+        transform: translateY(-2px);
+    }
+
+    .submission-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
+
+    .submission-status.correct {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--accent);
+    }
+
+    .submission-status.incorrect {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
+
+    input[type="file"] {
+        color: var(--text-dim);
+        font-size: 0.9rem;
+    }
+
+    input[type="file"]::file-selector-button {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        color: var(--text-main);
+        cursor: pointer;
+        margin-right: 1rem;
+        transition: all 0.3s;
+    }
+
+    input[type="file"]::file-selector-button:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+</style>
+
+<script>
+    function updateTimers() {
+        const now = new Date().getTime();
+        const timers = document.querySelectorAll('.timer-display');
+
+        timers.forEach(timer => {
+            const endTime = parseInt(timer.getAttribute('data-end-time'));
+            const distance = endTime - now;
+
+            const timeSpan = timer.querySelector('.time-left');
+            const parentCard = timer.closest('.card');
+            const submitBtn = parentCard.querySelector('button[type="submit"]');
+            const formInputs = parentCard.querySelectorAll('input');
+
+            if (distance < 0) {
+                timeSpan.innerHTML = "EXPIRED";
+                timer.style.background = "rgba(239, 68, 68, 0.1)";
+                timer.style.color = "var(--danger)";
+
+                // Disable form if time is up
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = "Time Expired";
+                    submitBtn.style.opacity = "0.5";
+                    submitBtn.style.cursor = "not-allowed";
+                }
+                formInputs.forEach(input => input.disabled = true);
+            } else {
+                const days = Math.floor(distance / (1000 * 60 * 60 * 24));
+                const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+                const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+                let displayStr = "";
+                if (days > 0) displayStr += days + "d ";
+                if (hours > 0 || days > 0) displayStr += hours + "h ";
+                displayStr += minutes + "m " + seconds + "s";
+
+                timeSpan.innerHTML = displayStr;
+
+                // Warning color if less than 2 minutes
+                if (distance < 120000) {
+                    timer.style.color = "#f59e0b";
+                    timer.style.background = "rgba(245, 158, 11, 0.1)";
+                }
+            }
+        });
+    }
+
+    // Run every second
+    setInterval(updateTimers, 1000);
+    // Run immediately
+    updateTimers();
+</script>
+{% endblock %}
