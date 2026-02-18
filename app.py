@@ -79,6 +79,7 @@ class User(UserMixin, db.Model):
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
+    topic = db.Column(db.String(200), nullable=True)  # Topic/category of the question
     option_a = db.Column(db.String(200), nullable=False)
     option_b = db.Column(db.String(200), nullable=False)
     option_c = db.Column(db.String(200), nullable=False)
@@ -533,6 +534,7 @@ def post_question():
         return render_template('post_question.html')
         
     text = request.form.get('text')
+    topic = request.form.get('topic', '')
     option_a = request.form.get('option_a')
     option_b = request.form.get('option_b')
     option_c = request.form.get('option_c')
@@ -558,7 +560,7 @@ def post_question():
         return redirect(url_for('admin_dashboard'))
 
     new_question = Question(
-        text=text, option_a=option_a, option_b=option_b, 
+        text=text, topic=topic, option_a=option_a, option_b=option_b, 
         option_c=option_c, option_d=option_d, 
         correct_answer=correct_answer, explanation=explanation, 
         meet_link=meet_link, time_limit=time_limit,

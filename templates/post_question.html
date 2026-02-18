@@ -21,6 +21,114 @@
     <div class="card" style="border-left: 5px solid var(--primary);">
         <form action="{{ url_for('post_question') }}" method="POST" enctype="multipart/form-data"
             style="display: grid; gap: 1.5rem;">
+
+            <!-- Topic Selector -->
+            <div>
+                <label
+                    style="display: block; margin-bottom: 0.75rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 600;">
+                    Topic / Category <span style="color: var(--danger);">*</span>
+                </label>
+                <select name="topic" required id="topicSelector">
+                    <option value="" disabled selected>— Select a Topic —</option>
+
+                    <optgroup label="📐 Quantitative Aptitude — Arithmetic">
+                        <option value="Number System">Number System</option>
+                        <option value="HCF & LCM">HCF &amp; LCM</option>
+                        <option value="Simplification">Simplification</option>
+                        <option value="Percentage">Percentage</option>
+                        <option value="Profit & Loss">Profit &amp; Loss</option>
+                        <option value="Simple Interest & Compound Interest">Simple Interest &amp; Compound Interest
+                        </option>
+                        <option value="Ratio & Proportion">Ratio &amp; Proportion</option>
+                        <option value="Average">Average</option>
+                        <option value="Time & Work">Time &amp; Work</option>
+                        <option value="Pipes & Cisterns">Pipes &amp; Cisterns</option>
+                        <option value="Time, Speed & Distance">Time, Speed &amp; Distance</option>
+                        <option value="Boats & Streams">Boats &amp; Streams</option>
+                        <option value="Mixture & Alligation">Mixture &amp; Alligation</option>
+                    </optgroup>
+
+                    <optgroup label="📐 Quantitative Aptitude — Algebra">
+                        <option value="Linear Equations">Linear Equations</option>
+                        <option value="Quadratic Equations">Quadratic Equations</option>
+                        <option value="Polynomials">Polynomials</option>
+                        <option value="Inequalities">Inequalities</option>
+                        <option value="Functions & Graphs">Functions &amp; Graphs</option>
+                    </optgroup>
+
+                    <optgroup label="📐 Quantitative Aptitude — Geometry">
+                        <option value="Lines & Angles">Lines &amp; Angles</option>
+                        <option value="Triangles">Triangles</option>
+                        <option value="Quadrilaterals">Quadrilaterals</option>
+                        <option value="Circles">Circles</option>
+                        <option value="Polygons">Polygons</option>
+                    </optgroup>
+
+                    <optgroup label="📐 Quantitative Aptitude — Mensuration">
+                        <option value="Area & Perimeter (2D)">Area &amp; Perimeter (2D)</option>
+                        <option value="Surface Area & Volume (3D)">Surface Area &amp; Volume (3D)</option>
+                    </optgroup>
+
+                    <optgroup label="📐 Quantitative Aptitude — Trigonometry">
+                        <option value="Basic Trigonometric Ratios">Basic Trigonometric Ratios</option>
+                        <option value="Trigonometric Identities">Trigonometric Identities</option>
+                        <option value="Heights & Distances">Heights &amp; Distances</option>
+                    </optgroup>
+
+                    <optgroup label="📐 Quantitative Aptitude — Permutation & Combination">
+                        <option value="Fundamental Counting Principle">Fundamental Counting Principle</option>
+                        <option value="Permutations">Permutations</option>
+                        <option value="Combinations">Combinations</option>
+                    </optgroup>
+
+                    <optgroup label="📐 Quantitative Aptitude — Probability">
+                        <option value="Basic Probability">Basic Probability</option>
+                        <option value="Conditional Probability">Conditional Probability</option>
+                    </optgroup>
+
+                    <optgroup label="📐 Quantitative Aptitude — Data Interpretation">
+                        <option value="DI: Tables">DI: Tables</option>
+                        <option value="DI: Bar Graphs">DI: Bar Graphs</option>
+                        <option value="DI: Line Graphs">DI: Line Graphs</option>
+                        <option value="DI: Pie Charts">DI: Pie Charts</option>
+                        <option value="DI: Caselets">DI: Caselets</option>
+                    </optgroup>
+
+                    <optgroup label="🧠 Logical Reasoning">
+                        <option value="Number Series">Number Series</option>
+                        <option value="Letter Series">Letter Series</option>
+                        <option value="Coding–Decoding">Coding–Decoding</option>
+                        <option value="Blood Relations">Blood Relations</option>
+                        <option value="Direction Sense">Direction Sense</option>
+                        <option value="Syllogisms">Syllogisms</option>
+                        <option value="Venn Diagrams">Venn Diagrams</option>
+                        <option value="Seating Arrangement">Seating Arrangement</option>
+                        <option value="Puzzles">Puzzles</option>
+                        <option value="Analogies">Analogies</option>
+                        <option value="Clocks & Calendars">Clocks &amp; Calendars</option>
+                    </optgroup>
+
+                    <optgroup label="🗣️ Verbal Ability">
+                        <option value="Reading Comprehension">Reading Comprehension</option>
+                        <option value="Vocabulary (Synonyms, Antonyms)">Vocabulary (Synonyms, Antonyms)</option>
+                        <option value="Sentence Correction">Sentence Correction</option>
+                        <option value="Error Spotting">Error Spotting</option>
+                        <option value="Fill in the Blanks">Fill in the Blanks</option>
+                        <option value="Para Jumbles">Para Jumbles</option>
+                        <option value="Active & Passive Voice">Active &amp; Passive Voice</option>
+                        <option value="Direct & Indirect Speech">Direct &amp; Indirect Speech</option>
+                    </optgroup>
+
+                    <optgroup label="💻 Placement / Company Focused">
+                        <option value="Quant + Reasoning Mixed Problems">Quant + Reasoning Mixed Problems</option>
+                        <option value="Time-based Calculation Questions">Time-based Calculation Questions</option>
+                        <option value="Data Sufficiency">Data Sufficiency</option>
+                        <option value="Logical Puzzles">Logical Puzzles</option>
+                    </optgroup>
+                </select>
+            </div>
+
+            <!-- Question Text -->
             <div>
                 <label
                     style="display: block; margin-bottom: 0.75rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 600;">Question
@@ -29,6 +137,7 @@
                     style="min-height: 120px;"></textarea>
             </div>
 
+            <!-- Image Upload -->
             <div>
                 <label
                     style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Question
@@ -46,6 +155,7 @@
                 </div>
             </div>
 
+            <!-- Options Grid -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <div>
                     <label
@@ -73,6 +183,7 @@
                 </div>
             </div>
 
+            <!-- Correct Answer + Time Limit -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <div>
                     <label
@@ -100,6 +211,7 @@
                 </div>
             </div>
 
+            <!-- Explanation -->
             <div>
                 <label
                     style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Explanation
@@ -146,15 +258,24 @@
     const unitSelector = document.getElementById('unitSelector');
     function updateUnitColor() {
         if (unitSelector.value === 'days') {
-            unitSelector.style.background = 'rgba(16, 185, 129, 0.15)'; // Emerald/Green
+            unitSelector.style.background = 'rgba(16, 185, 129, 0.15)';
             unitSelector.style.borderColor = 'var(--accent)';
         } else {
-            unitSelector.style.background = 'rgba(99, 102, 241, 0.15)'; // Indigo/Purple
+            unitSelector.style.background = 'rgba(99, 102, 241, 0.15)';
             unitSelector.style.borderColor = 'var(--primary)';
         }
     }
     unitSelector.addEventListener('change', updateUnitColor);
-    updateUnitColor(); // Initial run
+    updateUnitColor();
+
+    // Topic selector highlight on selection
+    const topicSelector = document.getElementById('topicSelector');
+    topicSelector.addEventListener('change', function () {
+        if (this.value) {
+            this.style.borderColor = 'var(--accent)';
+            this.style.color = 'white';
+        }
+    });
 </script>
 {% endblock %}
 {% endblock %}
