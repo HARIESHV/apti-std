@@ -199,9 +199,9 @@
                 <div>
                     <label
                         style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Time
-                        Limit</label>
+                        Limit (0 for No Limit)</label>
                     <div style="display: flex; gap: 0.5rem;">
-                        <input type="number" name="time_limit" value="10" min="1" required style="flex: 2;">
+                        <input type="number" name="time_limit" value="10" min="0" required style="flex: 2;">
                         <select name="time_unit" required id="unitSelector"
                             style="flex: 1; background: rgba(99, 102, 241, 0.15); border: 1.5px solid var(--primary); font-weight: 700; color: white;">
                             <option value="minutes">Minutes</option>

@@ -111,6 +111,109 @@
             font-weight: 500;
         }
 
+        /* Notifications Styles */
+        .notification-bell-container {
+            position: relative;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+        }
+
+        .notification-bell {
+            color: var(--text-dim);
+            transition: color 0.3s;
+        }
+
+        .notification-bell:hover {
+            color: var(--text-main);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ef4444;
+            color: white;
+            font-size: 0.65rem;
+            font-weight: 800;
+            padding: 2px 5px;
+            border-radius: 10px;
+            min-width: 18px;
+            height: 18px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #07090e;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+            }
+
+            70% {
+                transform: scale(1.1);
+                box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+            }
+
+            100% {
+                transform: scale(1);
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+            }
+        }
+
+        .notification-dropdown {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            margin-top: 1rem;
+            width: 320px;
+            background: rgba(15, 18, 26, 0.95);
+            backdrop-filter: blur(25px);
+            border: 1px solid var(--glass-border);
+            border-radius: 1rem;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            display: none;
+            z-index: 1001;
+            overflow: hidden;
+        }
+
+        .notification-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .notification-list {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            padding: 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            transition: background 0.3s;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .notification-item:hover {
+            background: rgba(255, 255, 255, 0.03);
+        }
+
+        .notification-empty {
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.9rem;
+        }
+
         @media (max-width: 768px) {
             nav {
                 padding: 1rem 1.5rem;
@@ -130,6 +233,24 @@
         <div class="nav-links">
             {% if current_user.is_authenticated %}
             {% if current_user.role == 'admin' %}
+            <div class="notification-bell-container" id="notif-bell">
+                <svg class="notification-bell" style="width:24px; height:24px" viewBox="0 0 24 24">
+                    <path fill="currentColor"
+                        d="M21,19V20H3V19L5,17V11C5,7.9 7.03,5.17 10,4.29C10,4.19 10,4.1 10,4A2,2 0 0,1 12,2A2,2 0 0,1 14,4C14,4.1 14,4.19 14,4.29C16.97,5.17 19,7.9 19,11V17L21,19M14,21A2,2 0 0,1 12,23A2,2 0 0,1 10,21" />
+                </svg>
+                <div class="notification-badge" id="notif-count">0</div>
+                <div class="notification-dropdown" id="notif-dropdown">
+                    <div class="notification-header">
+                        <span style="font-weight: 700; font-size: 0.9rem;">Notifications</span>
+                        <button onclick="markAllRead()"
+                            style="background: transparent; border: none; color: var(--primary); font-size: 0.75rem; font-weight: 700; cursor: pointer;">Clear
+                            All</button>
+                    </div>
+                    <div class="notification-list" id="notif-list">
+                        <div class="notification-empty">No new submissions</div>
+                    </div>
+                </div>
+            </div>
             <a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a>
             {% else %}
             <a href="{{ url_for('student_dashboard') }}">Student Hub</a>
@@ -160,6 +281,94 @@
         &copy; 2026 AptitudePro - Empowering Learning
     </footer>
     {% block extra_js %}{% endblock %}
+
+    {% if current_user.is_authenticated and current_user.role == 'admin' %}
+    <script>
+        const bell = document.getElementById('notif-bell');
+        const dropdown = document.getElementById('notif-dropdown');
+        const list = document.getElementById('notif-list');
+        const badge = document.getElementById('notif-count');
+        let lastNotifCount = 0;
+        let isFirstLoad = true;
+
+        // Request notification permission
+        if ("Notification" in window && Notification.permission === "default") {
+            Notification.requestPermission();
+        }
+
+        bell.onclick = (e) => {
+            e.stopPropagation();
+            dropdown.style.display = dropdown.style.display === 'block' ? 'none' : 'block';
+        };
+
+        window.onclick = () => { dropdown.style.display = 'none'; };
+        dropdown.onclick = (e) => e.stopPropagation();
+
+        async function updateNotifications() {
+            try {
+                const res = await fetch('/admin/notifications');
+                const data = await res.json();
+
+                if (data.count > 0) {
+                    // Show desktop alert if count increased and not first load
+                    if (!isFirstLoad && data.count > lastNotifCount && "Notification" in window && Notification.permission === "granted") {
+                        const newCount = data.count - lastNotifCount;
+                        const latest = data.notifications[0];
+                        new Notification("New Submission - AptitudePro", {
+                            body: `${latest.student_name} and ${newCount - 1} others finished questions.`,
+                            icon: "/static/favicon.ico"
+                        });
+                    }
+
+                    lastNotifCount = data.count;
+                    isFirstLoad = false;
+
+                    badge.innerText = data.count;
+                    badge.style.display = 'flex';
+
+                    let html = '';
+                    data.notifications.forEach(n => {
+                        html += `
+                            <div class="notification-item">
+                                <div style="display: flex; justify-content: space-between; align-items: start;">
+                                    <strong style="color: var(--text-main); font-size: 0.85rem;">${n.student_name}</strong>
+                                    <span style="font-size: 0.7rem; color: var(--text-dim);">${n.created_at}</span>
+                                </div>
+                                <div style="font-size: 0.8rem; color: var(--text-dim); line-height: 1.4;">
+                                    Finished: <span style="color: var(--primary);">${n.question_text}</span>
+                                </div>
+                                <div style="font-size: 0.75rem; font-weight: 700; color: ${n.is_correct ? 'var(--accent)' : 'var(--danger)'}">
+                                    ${n.is_correct ? 'CORRECT ✓' : 'INCORRECT ✗'}
+                                </div>
+                            </div>
+                        `;
+                    });
+                    list.innerHTML = html;
+                } else {
+                    isFirstLoad = false;
+                    lastNotifCount = 0;
+                    badge.style.display = 'none';
+                    list.innerHTML = '<div class="notification-empty">No new submissions</div>';
+                }
+            } catch (err) {
+                console.error('Failed to fetch notifications', err);
+            }
+        }
+
+        async function markAllRead() {
+            try {
+                await fetch('/admin/notifications/mark_read', { method: 'POST' });
+                updateNotifications();
+                dropdown.style.display = 'none';
+            } catch (err) {
+                console.error('Failed to mark as read', err);
+            }
+        }
+
+        updateNotifications();
+        setInterval(updateNotifications, 10000); // Every 10 seconds
+    </script>
+    {% endif %}
 </body>
 
 </html>

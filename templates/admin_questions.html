@@ -1,62 +1,135 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div class="animate-fade-in"
-    style="margin-bottom: 2rem; display: flex; justify-content: space-between; align-items: center;">
-    <div>
-        <h1 style="font-size: 2.228rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -1px;">
-            Question <span class="text-gradient">Management</span>
-        </h1>
-        <p style="color: var(--text-dim);">Manage active and expired challenges.</p>
+<div class="hero-header animate-fade-in">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; position: relative; z-index: 1;">
+        <div>
+            <h1 style="font-size: 2.8rem; font-weight: 800; margin-bottom: 0.75rem; letter-spacing: -1.5px;">
+                Question <span class="text-gradient">Vault</span>
+            </h1>
+            <p style="color: var(--text-dim); font-size: 1.1rem; max-width: 600px;">Curate and manage your collection of
+                aptitude challenges. Ensure high quality and relevant testing for all members.</p>
+        </div>
+        <div>
+            <a href="{{ url_for('post_question') }}" class="btn btn-primary" style="padding: 1rem 2rem;">
+                <svg style="width:24px; height:24px" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+                </svg>
+                Create New Challenge
+            </a>
+        </div>
     </div>
-    <a href="{{ url_for('post_question') }}" class="btn btn-primary">Add Question</a>
 </div>
 
-<div style="display: grid; gap: 2.5rem;">
-    <div class="card" style="border-top: 5px solid var(--primary);">
+<div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2.5rem; align-items: start;">
+    <!-- Active Questions -->
+    <div style="display: grid; gap: 1.5rem;">
         <h2
-            style="margin-bottom: 2rem; font-weight: 800; display: flex; align-items: center; gap: 12px; color: var(--primary);">
-            Active Questions
+            style="font-size: 1.5rem; font-weight: 800; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 12px;">
+            <div style="width: 8px; height: 32px; background: var(--primary); border-radius: 4px;"></div>
+            Active Challenges
         </h2>
+
         <div style="display: grid; gap: 1rem;">
             {% for q in active_questions %}
-            <div class="glass-panel"
-                style="padding: 1.25rem; display: flex; justify-content: space-between; align-items: center;">
-                <div>
-                    <div style="font-weight: 600;">{{ q.text }}</div>
-                    <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 4px;">Key: {{ q.correct_answer }}
+            <div class="card"
+                style="margin-bottom: 0; padding: 0; overflow: hidden; border-left: 4px solid var(--primary); transition: transform 0.2s;">
+                <div style="display: flex; min-height: 180px;">
+                    <!-- Question Image or Attractive Placeholder -->
+                    <div
+                        style="width: 220px; background: {% if q.image_file %}url('{{ url_for('static', filename='question_images/' + q.image_file) }}'){% else %}linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%){% endif %}; background-size: cover; background-position: center; position: relative;">
+                        {% if not q.image_file %}
+                        <div
+                            style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: rgba(255,255,255,0.2); font-weight: 900; font-size: 3rem;">
+                            {{ q.topic[:1] if q.topic else 'Q' }}
+                        </div>
+                        {% endif %}
+                    </div>
+
+                    <div
+                        style="flex-grow: 1; padding: 1.5rem; display: flex; flex-direction: column; justify-content: space-between;">
+                        <div>
+                            <div
+                                style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem;">
+                                <span
+                                    style="padding: 4px 12px; border-radius: 20px; background: rgba(99, 102, 241, 0.1); color: var(--primary); font-size: 0.75rem; font-weight: 700; text-transform: uppercase;">
+                                    {{ q.topic if q.topic else 'General' }}
+                                </span>
+                                <div style="display: flex; gap: 0.5rem;">
+                                    <a href="{{ url_for('edit_question', question_id=q.id) }}" class="btn"
+                                        style="background: rgba(99, 102, 241, 0.1); color: var(--primary); padding: 0.5rem 1rem; font-size: 0.8rem;">
+                                        Edit
+                                    </a>
+                                    <form action="{{ url_for('delete_question', question_id=q.id) }}" method="POST"
+                                        onsubmit="return confirm('Archive this question?')">
+                                        <button type="submit" class="btn"
+                                            style="background: rgba(239, 68, 68, 0.1); color: var(--danger); padding: 0.5rem 1rem; font-size: 0.8rem;">
+                                            Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                            <h3
+                                style="font-size: 1.2rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-main); line-height: 1.4;">
+                                {{ q.text }}</h3>
+                        </div>
+
+                        <div
+                            style="display: flex; gap: 1.5rem; color: var(--text-dim); font-size: 0.85rem; border-top: 1px solid var(--glass-border); pt: 1rem; padding-top: 1rem;">
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <svg style="width:16px; height:16px" viewBox="0 0 24 24">
+                                    <path fill="currentColor"
+                                        d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M16.2,16.2L11,13V7H12.5V12.2L17,14.9L16.2,16.2Z" />
+                                </svg>
+                                {{ q.time_limit }} mins
+                            </div>
+                            <div style="display: flex; align-items: center; gap: 6px;">
+                                <svg style="width:16px; height:16px" viewBox="0 0 24 24">
+                                    <path fill="currentColor"
+                                        d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,16.5L6.5,12L7.91,10.59L11,13.67L16.09,8.58L17.5,10L11,16.5Z" />
+                                </svg>
+                                Answer: <span style="font-weight: 700; color: var(--accent); margin-left: 4px;">{{
+                                    q.correct_answer }}</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <form action="{{ url_for('delete_question', question_id=q.id) }}" method="POST"
-                    onsubmit="return confirm('Delete?')">
-                    <button type="submit" class="btn"
-                        style="color: var(--danger); background: rgba(239, 68, 68, 0.1); padding: 0.5rem;">Delete</button>
-                </form>
             </div>
             {% endfor %}
             {% if not active_questions %}
-            <p style="text-align: center; color: var(--text-dim); padding: 2rem;">No active questions.</p>
+            <div class="glass-panel" style="padding: 4rem; text-align: center;">
+                <p style="color: var(--text-dim); font-size: 1.1rem;">No questions available yet. Start building your
+                    vault!</p>
+            </div>
             {% endif %}
         </div>
     </div>
 
-    <div class="card" style="border-top: 5px solid #64748b;">
-        <h2 style="margin-bottom: 2rem; font-weight: 800; color: #64748b;">Previous Challenges</h2>
-        <div style="display: grid; gap: 1rem;">
-            {% for q in expired_questions %}
-            <div class="glass-panel"
-                style="padding: 1.25rem; display: flex; justify-content: space-between; align-items: center; opacity: 0.7;">
-                <div>
-                    <div style="font-weight: 600;">{{ q.text }}</div>
-                    <div style="font-size: 0.8rem; color: var(--text-dim); margin-top: 4px;">Key: {{ q.correct_answer }}
-                    </div>
+    <!-- Sidebar Info/Stats -->
+    <div style="display: grid; gap: 2.5rem;">
+        <div class="card glass-panel" style="padding: 2rem; border-color: rgba(139, 92, 246, 0.2);">
+            <h3 style="font-size: 1.2rem; font-weight: 800; margin-bottom: 1.5rem; color: var(--text-main);">Vault
+                Overview</h3>
+            <div style="display: grid; gap: 1.25rem;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <span style="color: var(--text-dim);">Total Questions</span>
+                    <span style="font-weight: 800; font-size: 1.5rem; color: var(--primary);">{{ active_questions|length
+                        }}</span>
                 </div>
-                <form action="{{ url_for('delete_question', question_id=q.id) }}" method="POST">
-                    <button type="submit" class="btn"
-                        style="color: var(--danger); background: rgba(239, 68, 68, 0.05); padding: 0.5rem;">Delete</button>
-                </form>
+                <div style="height: 1px; background: var(--glass-border);"></div>
+                <div style="font-size: 0.85rem; color: var(--text-dim); line-height: 1.4;">
+                    Active questions are immediately visible to all students based on their individual registration
+                    status.
+                </div>
             </div>
-            {% endfor %}
+        </div>
+
+        <!-- Helpful Tip -->
+        <div class="card"
+            style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, transparent 100%); border-color: rgba(16, 185, 129, 0.2);">
+            <h4 style="color: var(--accent); font-weight: 800; margin-bottom: 0.75rem;">Pro Tip</h4>
+            <p style="font-size: 0.85rem; color: var(--text-dim);">Balance your challenges across different topics to
+                ensure a holistic learning experience for students.</p>
         </div>
     </div>
 </div>

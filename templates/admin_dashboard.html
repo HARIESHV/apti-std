@@ -2,21 +2,25 @@
 
 {% block content %}
 <!-- Header Section -->
-<div class="animate-fade-in"
-    style="margin-bottom: 3.5rem; display: flex; justify-content: space-between; align-items: flex-end;">
-    <div>
-        <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -1px;">
-            Admin <span class="text-gradient">Control Center</span>
-        </h1>
-        <p style="color: var(--text-dim); font-size: 1.1rem;">Manage classrooms, links, and student assignments.</p>
+<div class="hero-header animate-fade-in">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; position: relative; z-index: 1;">
+        <div>
+            <h1 style="font-size: 2.8rem; font-weight: 800; margin-bottom: 0.75rem; letter-spacing: -1.5px;">
+                Admin <span class="text-gradient">Command Hub</span>
+            </h1>
+            <p style="color: var(--text-dim); font-size: 1.1rem; max-width: 600px;">Orchestrate your virtual campus.
+                Manage classrooms, monitor submissions, and empower your students from one central dashboard.</p>
+        </div>
+        <div style="text-align: right;">
+            <a href="{{ url_for('post_question') }}" class="btn btn-primary"
+                style="padding: 1rem 2rem; font-size: 1rem;">
+                <svg style="width:24px; height:24px" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
+                </svg>
+                Post New Challenge
+            </a>
+        </div>
     </div>
-    <a href="{{ url_for('post_question') }}" class="btn btn-primary"
-        style="padding: 0.75rem 1.5rem; margin-bottom: 5px;">
-        <svg style="width:20px; height:20px" viewBox="0 0 24 24">
-            <path fill="currentColor" d="M19,13H13V19H11V13H5V11H11V5H13V11H19V13Z" />
-        </svg>
-        Post New Question
-    </a>
 </div>
 
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: start; margin-bottom: 3.5rem;">
@@ -84,37 +88,6 @@
             </form>
         </div>
 
-        <!-- System Settings Section -->
-        <div class="card" style="border-left: 5px solid #f59e0b;">
-            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 2rem;">
-                <div
-                    style="width: 40px; height: 40px; background: rgba(245, 158, 11, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #f59e0b;">
-                    <svg style="width:24px; height:24px" viewBox="0 0 24 24">
-                        <path fill="currentColor"
-                            d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.35 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.97 19.05,5.05L16.56,6.05C16.04,5.65 15.48,5.32 14.87,5.07L14.49,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.51,2.42L9.13,5.07C8.52,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.97 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.35 4.5,12.33 4.5,12C4.5,12.33 4.53,12.65 4.57,12.97L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.95C7.96,18.34 8.52,18.68 9.13,18.93L9.51,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.49,21.58L14.87,18.93C15.48,18.67 16.04,18.34 16.56,17.95L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z" />
-                    </svg>
-                </div>
-                <h2 style="font-size: 1.5rem; font-weight: 700;">System Settings</h2>
-            </div>
-
-            <form action="{{ url_for('update_config') }}" method="POST" style="display: grid; gap: 1.5rem;">
-                <div>
-                    <label
-                        style="display: block; margin-bottom: 0.75rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 600;">Max
-                        Website Members</label>
-                    <div style="display: flex; gap: 1rem; align-items: center;">
-                        <input type="number" name="max_members" value="{{ config.max_members if config else 50 }}"
-                            min="1" required style="width: 100px;">
-                        <span style="color: var(--text-dim); font-size: 0.85rem;">Currently: <strong>{{
-                                all_users|length }}</strong> registered</span>
-                    </div>
-                </div>
-                <div style="text-align: right;">
-                    <button type="submit" class="btn btn-primary"
-                        style="background: #f59e0b; border-color: #f59e0b;">Save Configuration</button>
-                </div>
-            </form>
-        </div>
     </div>
 
     <div style="display: grid; gap: 2.5rem;">

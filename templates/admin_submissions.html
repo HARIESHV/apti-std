@@ -1,76 +1,129 @@
 {% extends "layout.html" %}
 
 {% block content %}
-<div class="animate-fade-in" style="margin-bottom: 2rem;">
-    <h1 style="font-size: 2.228rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -1px;">
-        Latest <span class="text-gradient">Submissions</span>
-    </h1>
-    <p style="color: var(--text-dim);">Review student performance and solutions.</p>
+<div class="hero-header animate-fade-in">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; position: relative; z-index: 1;">
+        <div>
+            <h1 style="font-size: 2.8rem; font-weight: 800; margin-bottom: 0.75rem; letter-spacing: -1.5px;">
+                Insight <span class="text-gradient">Engine</span>
+            </h1>
+            <p style="color: var(--text-dim); font-size: 1.1rem; max-width: 600px;">Review detailed solutions and track
+                student progress across all active challenges in real-time.</p>
+        </div>
+        <div style="text-align: right; display: flex; flex-direction: column; align-items: flex-end; gap: 1rem;">
+            <div>
+                <div style="font-size: 2.2rem; font-weight: 800; color: var(--accent);">{{ results|length }}</div>
+                <div style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase;">Total Submissions
+                </div>
+            </div>
+            <a href="{{ url_for('export_submissions') }}"
+                style="display: inline-flex; align-items: center; gap: 8px; padding: 0.6rem 1.2rem; background: rgba(16, 185, 129, 0.15); color: #10b981; border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 10px; font-size: 0.85rem; font-weight: 700; text-decoration: none; transition: all 0.2s;"
+                onmouseover="this.style.background='rgba(16,185,129,0.25)'"
+                onmouseout="this.style.background='rgba(16,185,129,0.15)'">
+                <svg style="width:16px;height:16px" viewBox="0 0 24 24">
+                    <path fill="currentColor"
+                        d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20M10,19L8,17L10,15V17H14V15L16,17L14,19V17H10V19Z" />
+                </svg>
+                Export CSV
+            </a>
+        </div>
+    </div>
 </div>
 
-<div class="card" style="border-left: 5px solid var(--accent); padding: 0; overflow: hidden;">
-    <table style="width: 100%; border-collapse: collapse; text-align: left;">
-        <thead>
-            <tr style="background: rgba(255,255,255,0.03);">
-                <th style="padding: 1.25rem;">Student</th>
-                <th style="padding: 1.25rem;">Question</th>
-                <th style="padding: 1.25rem;">Result</th>
-                <th style="padding: 1.25rem;">Solution</th>
-                <th style="padding: 1.25rem;">Time</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for r in results %}
-            <tr style="border-top: 1px solid rgba(255,255,255,0.05);">
-                <td style="padding: 1.25rem;">
-                    <div style="font-weight: 600;">{{ r.student.username }}</div>
-                </td>
-                <td
-                    style="padding: 1.25rem; max-width: 300px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                    {{ r.question.text }}
-                </td>
-                <td style="padding: 1.25rem;">
-                    <span class="status-badge {{ 'correct' if r.is_correct else 'incorrect' }}">
-                        {{ 'CORRECT' if r.is_correct else 'INCORRECT' }}
-                    </span>
-                </td>
-                <td style="padding: 1.25rem;">
-                    {% if r.file_path %}
-                    <a href="{{ url_for('download_file', filename=r.file_path) }}" target="_blank" class="btn"
-                        style="color: var(--primary); background: rgba(99, 102, 241, 0.1); padding: 0.4rem 0.8rem; font-size: 0.75rem;">View
-                        Doc</a>
-                    {% endif %}
-                </td>
-                <td style="padding: 1.25rem; font-size: 0.8rem; color: var(--text-dim);">
-                    {{ r.submitted_at.strftime('%m/%d %H:%M') }}
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+<div class="card glass-panel" style="padding: 0; overflow: hidden; border-color: rgba(255, 255, 255, 0.05);">
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr
+                    style="background: rgba(255,255,255,0.02); color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">
+                    <th style="padding: 1.5rem;">Student</th>
+                    <th style="padding: 1.5rem;">Challenge</th>
+                    <th style="padding: 1.5rem;">Outcome</th>
+                    <th style="padding: 1.5rem;">Artifacts</th>
+                    <th style="padding: 1.5rem;">Timestamp</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for r in results %}
+                <tr
+                    style="border-top: 1px solid var(--glass-border); background: transparent; transition: background 0.2s;">
+                    <td style="padding: 1.5rem;">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div
+                                style="width: 32px; height: 32px; background: rgba(139, 92, 246, 0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--secondary);">
+                                {{ r.student.username[:1].upper() }}
+                            </div>
+                            <div style="font-weight: 600; color: var(--text-main);">{{ r.student.full_name }}</div>
+                        </div>
+                    </td>
+                    <td style="padding: 1.5rem; max-width: 350px;">
+                        <div
+                            style="font-size: 0.95rem; color: var(--text-main); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                            {{ r.question.text }}
+                        </div>
+                    </td>
+                    <td style="padding: 1.5rem;">
+                        <span class="status-badge {{ 'correct' if r.is_correct else 'incorrect' }}">
+                            {{ 'PASS' if r.is_correct else 'FAIL' }}
+                        </span>
+                    </td>
+                    <td style="padding: 1.5rem;">
+                        {% if r.file_path %}
+                        <a href="{{ url_for('download_file', filename=r.file_path) }}" target="_blank" class="btn"
+                            style="color: var(--primary); background: rgba(99, 102, 241, 0.1); padding: 0.5rem 1rem; font-size: 0.8rem; border: 1px solid rgba(99, 102, 241, 0.2);">
+                            View Document
+                        </a>
+                        {% else %}
+                        <span style="color: var(--text-dim); font-style: italic; font-size: 0.85rem;">None</span>
+                        {% endif %}
+                    </td>
+                    <td style="padding: 1.5rem; font-size: 0.85rem; color: var(--text-dim);">
+                        {{ r.submitted_at.strftime('%b %d, %H:%M') }}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
     {% if not results %}
-    <div style="padding: 4rem; text-align: center; color: var(--text-dim);">No submissions yet.</div>
+    <div style="padding: 6rem; text-align: center;">
+        <div
+            style="width: 64px; height: 64px; background: var(--glass-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: var(--text-dim);">
+            <svg style="width:32px; height:32px" viewBox="0 0 24 24">
+                <path fill="currentColor"
+                    d="M13,9V3.5L18.5,9M6,2C4.89,2 4,2.89 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2H6Z" />
+            </svg>
+        </div>
+        <p style="color: var(--text-dim); font-size: 1.1rem;">No submissions recorded yet.</p>
+    </div>
     {% endif %}
 </div>
 {% endblock %}
 
 {% block extra_css %}
 <style>
+    tbody tr:hover {
+        background: rgba(255, 255, 255, 0.015) !important;
+    }
+
     .status-badge {
         font-weight: 800;
-        padding: 4px 12px;
-        border-radius: 12px;
-        font-size: 0.75rem;
+        padding: 6px 14px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        letter-spacing: 0.5px;
     }
 
     .status-badge.correct {
         color: var(--accent);
         background: rgba(16, 185, 129, 0.1);
+        border: 1px solid rgba(16, 185, 129, 0.2);
     }
 
     .status-badge.incorrect {
         color: var(--danger);
         background: rgba(239, 68, 68, 0.1);
+        border: 1px solid rgba(239, 68, 68, 0.2);
     }
 </style>
 {% endblock %}

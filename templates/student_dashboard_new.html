@@ -1,0 +1,43 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<!-- Header Section -->
+<div class="hero-header animate-fade-in">
+    <div style="display: flex; justify-content: space-between; align-items: center; position: relative; z-index: 1;">
+        <div>
+            <h1 style="font-size: 2.8rem; font-weight: 800; margin-bottom: 0.75rem; letter-spacing: -1.5px;">
+                Welcome, <span class="text-gradient">{{ current_user.full_name }}</span>
+            </h1>
+            <p style="color: var(--text-dim); font-size: 1.1rem; max-width: 500px;">Ready to conquer today's challenges?
+                Your progress is tracked and your potential is limitless.</p>
+        </div>
+        <div style="display: flex; gap: 2.5rem; align-items: center;">
+            <div style="text-align: center;">
+                <div style="font-size: 2rem; font-weight: 800; color: var(--primary);">{{ stats.solved }}</div>
+                <div style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">
+                    Solved</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 2rem; font-weight: 800; color: var(--accent);">{{ "{:.0f}".format(stats.accuracy)
+                    }}%</div>
+                <div style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">
+                    Accuracy</div>
+            </div>
+            {% if classroom and classroom.is_live %}
+            <div
+                style="border-left: 1px solid var(--glass-border); padding-left: 2.5rem; display: flex; align-items: center; gap: 1rem;">
+                <div class="live-indicator"></div>
+                <div>
+                    <div style="font-size: 0.75rem; color: #ef4444; font-weight: 800; text-transform: uppercase;">Live
+                        Now</div>
+                    <a href="{{ classroom.active_meet_link }}" target="_blank"
+                        style="color: var(--text-main); text-decoration: none; font-weight: 700; font-size: 0.9rem;">Join
+                        Classroom &rarr;</a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- Rest of the dashboard remains the same... -->
