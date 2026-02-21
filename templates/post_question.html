@@ -10,7 +10,9 @@
             <p style="color: var(--text-dim);">Add a new challenge for the students.</p>
         </div>
         <a href="{{ url_for('admin_dashboard') }}" class="btn"
-            style="background: rgba(255,255,255,0.05); color: var(--text-dim);">
+            style="display: inline-flex; align-items: center; gap: 8px; background: rgba(16, 185, 129, 0.15); color: var(--accent); border: 1px solid rgba(16, 185, 129, 0.3); padding: 0.6rem 1.2rem; border-radius: 10px; font-weight: 700; text-decoration: none; transition: all 0.2s;"
+            onmouseover="this.style.background='rgba(16,185,129,0.25)'"
+            onmouseout="this.style.background='rgba(16,185,129,0.15)'">
             <svg style="width:20px; height:20px" viewBox="0 0 24 24">
                 <path fill="currentColor" d="M20,11V13H8L13.5,18.5L12.08,19.92L4.16,12L12.08,4.08L13.5,5.5L8,11H20Z" />
             </svg>
