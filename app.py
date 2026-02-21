@@ -20,6 +20,11 @@ except ImportError:
 
 load_dotenv()
 
+IST = pytz.timezone('Asia/Kolkata')
+
+def get_now_ist():
+    return datetime.now(IST).replace(tzinfo=None)
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(16))
 app.config['UPLOAD_FOLDER'] = 'uploads'
@@ -42,7 +47,7 @@ class User(UserMixin, db.Model):
     full_name = db.Column(db.String(120))
     password = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(20), default='student')
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_ist)
     
     answers = db.relationship('Answer', backref='student', lazy=True)
     attempts = db.relationship('Attempt', backref='student', lazy=True)
@@ -60,7 +65,7 @@ class Question(db.Model):
     meet_link = db.Column(db.String(500))
     time_limit = db.Column(db.Integer, default=10) # minutes
     image_file = db.Column(db.String(100))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_ist)
     
     answers = db.relationship('Answer', backref='question', lazy=True)
     attempts = db.relationship('Attempt', backref='question', lazy=True)
@@ -73,13 +78,13 @@ class Answer(db.Model):
     file_path = db.Column(db.String(200))
     is_correct = db.Column(db.Boolean)
     is_expired = db.Column(db.Boolean, default=False)
-    submitted_at = db.Column(db.DateTime, default=datetime.utcnow)
+    submitted_at = db.Column(db.DateTime, default=get_now_ist)
 
 class Attempt(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     student_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     question_id = db.Column(db.Integer, db.ForeignKey('question.id'), nullable=False)
-    start_time = db.Column(db.DateTime, default=datetime.utcnow)
+    start_time = db.Column(db.DateTime, default=get_now_ist)
     __table_args__ = (db.UniqueConstraint('student_id', 'question_id', name='_student_question_uc'), )
 
 class Classroom(db.Model):
@@ -87,14 +92,14 @@ class Classroom(db.Model):
     active_meet_link = db.Column(db.String(500), default='https://meet.google.com/')
     detected_title = db.Column(db.String(200), default='Official Classroom')
     is_live = db.Column(db.Boolean, default=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=get_now_ist)
 
 class MeetLink(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String(100))
     url = db.Column(db.String(500))
     is_active = db.Column(db.Boolean, default=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_ist)
 
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -105,7 +110,7 @@ class Notification(db.Model):
     question_text = db.Column(db.String(200))
     is_correct = db.Column(db.Boolean)
     read = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=get_now_ist)
 
 # --- Helpers ---
 
@@ -396,7 +401,7 @@ def update_classroom():
         classroom.active_meet_link = link
         classroom.is_live = is_live
         classroom.detected_title = title
-        classroom.updated_at = datetime.utcnow()
+        classroom.updated_at = get_now_ist()
         db.session.commit()
     
     flash('Classroom updated')
@@ -461,16 +466,14 @@ def student_dashboard():
     correct_count = sum(1 for a in answers_list if a.is_correct)
 
     # Compute today's stats (based on IST midnight)
-    ist = pytz.timezone('Asia/Kolkata')
-    now_ist = datetime.now(ist)
+    now_ist = get_now_ist()
     today_ist_start = now_ist.replace(hour=0, minute=0, second=0, microsecond=0)
-    # Convert IST midnight to UTC for comparison with database timestamps
-    today_utc_cutoff = today_ist_start.astimezone(pytz.utc).replace(tzinfo=None)
     
-    today_questions = [q for q in questions if q.created_at >= today_utc_cutoff]
+    today_questions = [q for q in questions if q.created_at >= today_ist_start]
     today_question_ids = {q.id for q in today_questions}
     
-    today_answers = [a for a in answers_list if a.submitted_at >= today_utc_cutoff and a.question_id in today_question_ids]
+    # Answers submitted today
+    today_answers = [a for a in answers_list if a.submitted_at >= today_ist_start and a.question_id in today_question_ids]
     today_solved_count = len(today_answers)
     today_total_count = len(today_questions)
 
@@ -494,7 +497,7 @@ def student_dashboard():
                          user_attempts=user_attempts, stats=stats, 
                          classroom=classroom, active_meet_links=active_meet_links,
                          daily_stats=[],
-                         server_now=datetime.utcnow().timestamp() * 1000)
+                         server_now=get_now_ist().timestamp() * 1000)
 
 @app.route('/student/start_attempt', methods=['POST'])
 @login_required
@@ -521,7 +524,7 @@ def submit_answer():
         attempt = Attempt.query.filter_by(student_id=current_user.id, question_id=question_id).first()
         if attempt:
             expiry_time = attempt.start_time + timedelta(minutes=question.time_limit)
-            if datetime.utcnow() > expiry_time:
+            if get_now_ist() > expiry_time:
                 flash('TIME EXPIRED: Your submission was recorded as late and could not be accepted for full marks.')
                 new_ans = Answer(
                     student_id=current_user.id, question_id=question_id, 
