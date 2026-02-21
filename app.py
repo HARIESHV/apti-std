@@ -7,6 +7,7 @@ from datetime import datetime, timedelta
 import os
 import secrets
 import csv
+import pytz
 from io import StringIO, BytesIO
 from dotenv import load_dotenv
 
@@ -459,12 +460,17 @@ def student_dashboard():
     
     correct_count = sum(1 for a in answers_list if a.is_correct)
 
-    today_utc_start = datetime.utcnow().replace(hour=0, minute=0, second=0, microsecond=0)
+    # Compute today's stats (based on IST midnight)
+    ist = pytz.timezone('Asia/Kolkata')
+    now_ist = datetime.now(ist)
+    today_ist_start = now_ist.replace(hour=0, minute=0, second=0, microsecond=0)
+    # Convert IST midnight to UTC for comparison with database timestamps
+    today_utc_cutoff = today_ist_start.astimezone(pytz.utc).replace(tzinfo=None)
     
-    today_questions = [q for q in questions if q.created_at >= today_utc_start]
+    today_questions = [q for q in questions if q.created_at >= today_utc_cutoff]
     today_question_ids = {q.id for q in today_questions}
     
-    today_answers = [a for a in answers_list if a.question_id in today_question_ids]
+    today_answers = [a for a in answers_list if a.submitted_at >= today_utc_cutoff and a.question_id in today_question_ids]
     today_solved_count = len(today_answers)
     today_total_count = len(today_questions)
 
