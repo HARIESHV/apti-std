@@ -69,6 +69,12 @@ class User(UserMixin, db.Model):
     def total_attempted(self):
         return len(self.answers)
 
+    @property
+    def accuracy(self):
+        if not self.answers:
+            return 0
+        return (self.solved_count / len(self.answers)) * 100
+
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
@@ -423,9 +429,13 @@ def admin_dashboard():
     activity_logs = ActivityLog.query.order_by(ActivityLog.event_time.desc()).limit(10).all()
 
     # Platform stats
+    total_solved = Answer.query.filter_by(is_correct=True).count()
+    total_attempts = Answer.query.count()
+    
     platform_stats = {
-        'total_solved': Answer.query.filter_by(is_correct=True).count(),
-        'total_attempts': Answer.query.count()
+        'total_solved': total_solved,
+        'total_attempts': total_attempts,
+        'accuracy': (total_solved / total_attempts * 100) if total_attempts > 0 else 0
     }
 
     return render_template('admin_dashboard.html', 
@@ -437,6 +447,27 @@ def admin_dashboard():
                          activity_logs=activity_logs,
                          all_users=all_users,
                          platform_stats=platform_stats)
+
+@app.route('/admin/stats')
+@login_required
+def admin_stats():
+    if current_user.role != 'admin':
+        return redirect(url_for('student_dashboard'))
+    
+    total_solved = Answer.query.filter_by(is_correct=True).count()
+    total_attempts = Answer.query.count()
+    all_users = User.query.filter_by(role='student').all()
+    
+    platform_stats = {
+        'total_solved': total_solved,
+        'total_attempts': total_attempts,
+        'accuracy': (total_solved / total_attempts * 100) if total_attempts > 0 else 0
+    }
+    
+    # Optional: Get stats over time for a chart
+    return render_template('admin_stats.html', 
+                         platform_stats=platform_stats, 
+                         all_users=all_users)
 
 @app.route('/admin/activity')
 @login_required

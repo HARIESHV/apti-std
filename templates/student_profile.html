@@ -19,6 +19,14 @@
                 <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-main);">{{ user.solved_count }}</div>
             </div>
             <div
+                style="padding: 1rem 2rem; background: rgba(99, 102, 241, 0.1); border-radius: 12px; border: 1px solid rgba(99, 102, 241, 0.2);">
+                <div
+                    style="font-size: 0.8rem; color: var(--primary); text-transform: uppercase; margin-bottom: 4px; font-weight: 800;">
+                    Overall Accuracy</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-main);">{{
+                    "{:.1f}".format(user.accuracy) }}%</div>
+            </div>
+            <div
                 style="padding: 1rem 2rem; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid var(--glass-border);">
                 <div style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px;">
                     Member Since</div>
