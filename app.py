@@ -137,7 +137,10 @@ class Message(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # None for broadcast
-    content = db.Column(db.Text, nullable=False)
+    content = db.Column(db.Text, nullable=True) # Content can be null if only file is sent
+    file_data = db.Column(db.LargeBinary)
+    file_mimetype = db.Column(db.String(100))
+    file_name = db.Column(db.String(255))
     is_read = db.Column(db.Boolean, default=False)
     is_broadcast = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=get_now_ist)
@@ -210,8 +213,13 @@ def init_db():
                 try: conn.execute(db.text("ALTER TABLE notification ADD COLUMN type VARCHAR(50)"))
                 except: pass
                 
-                # Message table (handled by create_all normally, but let's be safe)
-                # No columns to add since it's a new table.
+                # Message table (handled by create_all normally, but let's be safe for existing users)
+                try: conn.execute(db.text(f"ALTER TABLE message ADD COLUMN file_data {blob_type}"))
+                except: pass
+                try: conn.execute(db.text("ALTER TABLE message ADD COLUMN file_mimetype VARCHAR(100)"))
+                except: pass
+                try: conn.execute(db.text("ALTER TABLE message ADD COLUMN file_name VARCHAR(255)"))
+                except: pass
                 
                 conn.commit()
         except:
@@ -832,14 +840,38 @@ def send_message():
     receiver_id = request.form.get('receiver_id', type=int)
     content = request.form.get('content')
     is_broadcast = request.form.get('is_broadcast') == 'true'
+    file = request.files.get('file')
     
-    if not content:
+    if not content and not file:
         return redirect(url_for('messages'))
         
+    file_data = None
+    file_mimetype = None
+    file_name = None
+    
+    if file and file.filename != '':
+        file_data = file.read()
+        file_mimetype = file.content_type
+        file_name = secure_filename(file.filename)
+        
     if is_broadcast and current_user.role == 'admin':
-        msg = Message(sender_id=current_user.id, content=content, is_broadcast=True)
+        msg = Message(
+            sender_id=current_user.id, 
+            content=content, 
+            is_broadcast=True,
+            file_data=file_data,
+            file_mimetype=file_mimetype,
+            file_name=file_name
+        )
     else:
-        msg = Message(sender_id=current_user.id, receiver_id=receiver_id, content=content)
+        msg = Message(
+            sender_id=current_user.id, 
+            receiver_id=receiver_id, 
+            content=content,
+            file_data=file_data,
+            file_mimetype=file_mimetype,
+            file_name=file_name
+        )
     
     db.session.add(msg)
     db.session.commit()
@@ -847,6 +879,24 @@ def send_message():
     if current_user.role == 'admin':
         return redirect(url_for('messages', user_id=receiver_id))
     return redirect(url_for('messages'))
+
+@app.route('/messages/download/<int:message_id>')
+@login_required
+def download_message_file(message_id):
+    msg = db.session.get(Message, message_id)
+    if not msg or not msg.file_data:
+        return "File not found", 404
+        
+    # Check permissions (either sender, receiver, or it's a broadcast)
+    if msg.sender_id != current_user.id and msg.receiver_id != current_user.id and not msg.is_broadcast:
+        return "Forbidden", 403
+        
+    return send_file(
+        BytesIO(msg.file_data),
+        mimetype=msg.file_mimetype,
+        as_attachment=True,
+        download_name=msg.file_name
+    )
 
 @app.route('/admin/notifications')
 @login_required
