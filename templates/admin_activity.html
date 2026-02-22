@@ -1,0 +1,82 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="animate-fade-in"
+    style="margin-bottom: 3rem; display: flex; justify-content: space-between; align-items: flex-end;">
+    <div>
+        <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -1px;">
+            System <span class="text-gradient">Activity</span>
+        </h1>
+        <p style="color: var(--text-dim); font-size: 1.1rem;">Live feed of all administrative and student actions.</p>
+    </div>
+    <a href="{{ url_for('admin_dashboard') }}" class="btn"
+        style="padding: 0.75rem 1.5rem; background: rgba(255,255,255,0.05); color: var(--text-main);">
+        <svg style="width:20px; height:20px" viewBox="0 0 24 24">
+            <path fill="currentColor" d="M21,11H6.83L10.41,7.41L9,6L3,12L9,18L10.41,16.58L6.83,13H21V11Z" />
+        </svg>
+        Dashboard
+    </a>
+</div>
+
+<div class="card glass-panel" style="padding: 2.5rem; border-top: 5px solid var(--secondary);">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div
+                style="width: 40px; height: 40px; background: rgba(139, 92, 246, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--secondary);">
+                <svg style="width:24px; height:24px" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M13,3V9H21V3M13,21H21V11H13M3,21H11V15H3M3,13H11V3H3V13Z" />
+                </svg>
+            </div>
+            <h2 style="font-size: 1.5rem; font-weight: 700;">Full Activity Log</h2>
+        </div>
+        <span
+            style="background: rgba(139, 92, 246, 0.1); color: var(--secondary); padding: 0.5rem 1.25rem; border-radius: 2rem; font-size: 0.9rem; font-weight: 700;">
+            {{ activity_logs|length }} Events Recorded
+        </span>
+    </div>
+
+    <div style="display: grid; gap: 1rem;">
+        {% if activity_logs %}
+        {% for log in activity_logs %}
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; padding: 1.5rem; background: rgba(255,255,255,0.02); border-radius: 16px; border: 1px solid rgba(255,255,255,0.05); transition: all 0.3s ease;">
+            <div style="display: flex; align-items: center; gap: 1.5rem;">
+                <div style="font-weight: 800; font-size: 0.7rem; padding: 6px 12px; border-radius: 8px; text-transform: uppercase; letter-spacing: 0.5px;
+                        {% if log.action == 'REGISTER' %}background: rgba(16,185,129,0.1); color: var(--accent);
+                        {% elif log.action == 'LOGIN' %}background: rgba(99,102,241,0.1); color: var(--primary);
+                        {% elif log.action == 'SUBMISSION' %}background: rgba(139,92,246,0.1); color: var(--secondary);
+                        {% else %}background: rgba(255,255,255,0.05); color: var(--text-dim);{% endif %}">
+                    {{ log.action }}
+                </div>
+                <div>
+                    <div style="font-size: 1rem; font-weight: 600; color: var(--text-main); margin-bottom: 2px;">
+                        {{ log.details }}
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-dim);">
+                        User ID: {{ log.user_id or 'System' }}
+                    </div>
+                </div>
+            </div>
+            <div style="text-align: right;">
+                <div style="font-size: 0.9rem; color: var(--text-main); font-weight: 600;">
+                    {{ log.event_time.strftime('%H:%M:%S') }}
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-dim);">
+                    {{ log.event_time.strftime('%b %d, %Y') }}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div
+            style="padding: 5rem; text-align: center; color: var(--text-dim); background: rgba(255,255,255,0.01); border-radius: 16px; border: 2px dashed rgba(255,255,255,0.05);">
+            <svg style="width:48px;height:48px;margin-bottom:1rem;opacity:0.5" viewBox="0 0 24 24">
+                <path fill="currentColor"
+                    d="M13,13H11V7H13M13,17H11V15H13M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2Z" />
+            </svg>
+            <p>No system activity has been recorded yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

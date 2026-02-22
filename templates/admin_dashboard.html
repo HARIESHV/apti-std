@@ -278,14 +278,23 @@
 
 <!-- Global System Activity -->
 <div class="card glass-panel" style="padding: 2.5rem; margin-top: 2.5rem; border-top: 4px solid var(--secondary);">
-    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 2.5rem;">
-        <div
-            style="width: 40px; height: 40px; background: rgba(139, 92, 246, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--secondary);">
-            <svg style="width:24px; height:24px" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M13,3V9H21V3M13,21H21V11H13M3,21H11V15H3M3,13H11V3H3V13Z" />
-            </svg>
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div
+                style="width: 40px; height: 40px; background: rgba(139, 92, 246, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--secondary);">
+                <svg style="width:24px; height:24px" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M13,3V9H21V3M13,21H21V11H13M3,21H11V15H3M3,13H11V3H3V13Z" />
+                </svg>
+            </div>
+            <h2 style="font-size: 1.5rem; font-weight: 700;">Global System Activity</h2>
         </div>
-        <h2 style="font-size: 1.5rem; font-weight: 700;">Global System Activity</h2>
+        <a href="{{ url_for('admin_activity_logs') }}" class="btn btn-primary"
+            style="padding: 0.5rem 1.25rem; font-size: 0.85rem;">
+            View Full Log
+            <svg style="width:18px;height:18px" viewBox="0 0 24 24">
+                <path fill="currentColor" d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
+            </svg>
+        </a>
     </div>
 
     <div style="display: grid; gap: 1rem;">

@@ -400,6 +400,14 @@ def admin_dashboard():
                          activity_logs=activity_logs,
                          all_users=all_users)
 
+@app.route('/admin/activity')
+@login_required
+def admin_activity_logs():
+    if current_user.role != 'admin':
+        return redirect(url_for('student_dashboard'))
+    logs = ActivityLog.query.order_by(ActivityLog.event_time.desc()).all()
+    return render_template('admin_activity.html', activity_logs=logs)
+
 @app.route('/student/profile', methods=['GET', 'POST'])
 @login_required
 def student_profile():

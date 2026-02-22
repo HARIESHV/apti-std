@@ -251,7 +251,9 @@
                     </div>
                 </div>
             </div>
-            <a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a>
+            <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('admin_activity_logs') }}">System Activity</a>
+            <a href="{{ url_for('history') }}">History</a>
             {% else %}
             <a href="{{ url_for('student_dashboard') }}">Student Hub</a>
             <a href="{{ url_for('student_profile') }}" style="display: flex; align-items: center; gap: 8px;">
