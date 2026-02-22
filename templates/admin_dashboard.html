@@ -328,59 +328,7 @@
     {% endif %}
 </div>
 
-<!-- Global System Activity -->
-<div class="card glass-panel" style="padding: 2.5rem; margin-top: 2.5rem; border-top: 4px solid var(--secondary);">
-    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 2.5rem;">
-        <div style="display: flex; align-items: center; gap: 12px;">
-            <div
-                style="width: 40px; height: 40px; background: rgba(139, 92, 246, 0.1); border-radius: 10px; display: flex; align-items: center; justify-content: center; color: var(--secondary);">
-                <svg style="width:24px; height:24px" viewBox="0 0 24 24">
-                    <path fill="currentColor" d="M13,3V9H21V3M13,21H21V11H13M3,21H11V15H3M3,13H11V3H3V13Z" />
-                </svg>
-            </div>
-            <h2 style="font-size: 1.5rem; font-weight: 700;">Global System Activity</h2>
-        </div>
-        <a href="{{ url_for('admin_activity_logs') }}" class="btn btn-primary"
-            style="padding: 0.5rem 1.25rem; font-size: 0.85rem;">
-            View Full Log
-            <svg style="width:18px;height:18px" viewBox="0 0 24 24">
-                <path fill="currentColor" d="M8.59,16.58L13.17,12L8.59,7.41L10,6L16,12L10,18L8.59,16.58Z" />
-            </svg>
-        </a>
-    </div>
 
-    <div style="display: grid; gap: 1rem;">
-        {% if activity_logs %}
-        {% for log in activity_logs %}
-        <div style="display: flex; justify-content: space-between; align-items: center; padding: 1.25rem; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); transition: transform 0.2s ease;"
-            onmouseover="this.style.transform='translateX(5px)'; this.style.borderColor='var(--secondary)'"
-            onmouseout="this.style.transform='translateX(0)'; this.style.borderColor='rgba(255,255,255,0.05)'">
-            <div style="display: flex; align-items: center; gap: 1rem;">
-                <div style="font-weight: 800; font-size: 0.75rem; padding: 4px 10px; border-radius: 6px; 
-                        {% if log.action == 'REGISTER' %}background: rgba(16,185,129,0.1); color: var(--accent);
-                        {% elif log.action == 'LOGIN' %}background: rgba(99,102,241,0.1); color: var(--primary);
-                        {% else %}background: rgba(255,255,255,0.05); color: var(--text-dim);{% endif %}">
-                    {{ log.action }}
-                </div>
-                <div style="font-size: 0.95rem; font-weight: 600; color: var(--text-main);">
-                    {{ log.details }}
-                </div>
-            </div>
-            <div style="text-align: right;">
-                <div style="font-size: 0.8rem; color: var(--text-dim); font-weight: 500;">
-                    {{ log.event_time.strftime('%Y-%m-%d | %H:%M') }}
-                </div>
-            </div>
-        </div>
-        {% endfor %}
-        {% else %}
-        <div
-            style="padding: 3rem; text-align: center; color: var(--text-dim); background: rgba(255,255,255,0.02); border-radius: 12px;">
-            No system events recorded yet.
-        </div>
-        {% endif %}
-    </div>
-</div>
 {% endblock %}
 
 {% block extra_css %}
