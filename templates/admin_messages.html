@@ -12,8 +12,8 @@
     </div>
 </div>
 
-<div style="display: grid; grid-template-columns: 320px 1fr; gap: 2rem; height: 700px;">
-    <!-- Sidebar: Users List -->
+<div style="display: grid; grid-template-columns: 320px 1fr 280px; gap: 1.5rem; height: 750px;">
+    <!-- Sidebar: Users List (Existing) -->
     <div class="card glass-panel" style="padding: 0; display: flex; flex-direction: column; overflow: hidden;">
         <div
             style="padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); background: rgba(139, 92, 246, 0.05);">
@@ -123,7 +123,6 @@
                 style="flex-grow: 1; padding: 0.8rem 1.5rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
             <button type="submit" class="btn btn-primary">Send</button>
         </form>
-
         {% else %}
         <div
             style="flex-grow: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-dim); opacity: 0.3;">
@@ -133,6 +132,48 @@
             </svg>
             <h2 style="font-size: 1.5rem; font-weight: 700;">Select a student</h2>
             <p>Select a student from the sidebar to start chatting.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Context: Recent Activity -->
+    <div class="card glass-panel" style="padding: 1.5rem; overflow-y: auto;">
+        <h2 style="font-size: 1.1rem; font-weight: 800; margin-bottom: 1.5rem; color: var(--text-main);">Recent Activity
+        </h2>
+        {% if student_context %}
+        <div style="display: grid; gap: 1rem;">
+            {% for ans in student_context %}
+            <div
+                style="padding: 1rem; background: rgba(255,255,255,0.03); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">
+                <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 8px;">
+                    <span
+                        style="font-size: 0.7rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; 
+                                 {{ 'background: rgba(16,185,129,0.1); color: var(--accent);' if ans.is_correct else 'background: rgba(239,68,68,0.1); color: var(--danger);' }}">
+                        {{ 'CORRECT ✓' if ans.is_correct else 'INCORRECT ✗' }}
+                    </span>
+                    <span style="font-size: 0.65rem; color: var(--text-dim);">{{ ans.submitted_at.strftime('%m-%d
+                        %H:%M') }}</span>
+                </div>
+                <div
+                    style="font-size: 0.85rem; color: var(--text-main); font-weight: 600; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;">
+                    {{ ans.question.text }}
+                </div>
+                <div style="font-size: 0.75rem; color: var(--text-dim); margin-top: 5px;">
+                    Option: <span style="color: var(--primary); font-weight: 700;">{{ ans.selected_option }}</span>
+                </div>
+            </div>
+            {% endfor %}
+            <a href="{{ url_for('admin_view_user', user_id=selected_user_id) }}"
+                style="display: block; text-align: center; font-size: 0.8rem; color: var(--primary); text-decoration: none; font-weight: 700; margin-top: 1rem;">View
+                Full Profile &rarr;</a>
+        </div>
+        {% else %}
+        <div style="text-align: center; color: var(--text-dim); padding: 2rem 0; font-size: 0.85rem;">
+            {% if selected_user_id %}
+            No recent answers found for this student.
+            {% else %}
+            Select a student to see their activity context here.
+            {% endif %}
         </div>
         {% endif %}
     </div>

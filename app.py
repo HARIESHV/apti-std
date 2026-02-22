@@ -797,17 +797,22 @@ def messages():
         # For admin, we'll show messages with a specific user if selected
         selected_user_id = request.args.get('user_id', type=int)
         chats = []
+        student_context = None
         if selected_user_id:
             chats = Message.query.filter(
                 ((Message.sender_id == current_user.id) & (Message.receiver_id == selected_user_id)) |
                 ((Message.sender_id == selected_user_id) & (Message.receiver_id == current_user.id)) |
                 (Message.is_broadcast == True)
             ).order_by(Message.created_at.asc()).all()
+            
+            # Fetch student's recent answers for context
+            student_context = Answer.query.filter_by(student_id=selected_user_id).order_by(Answer.submitted_at.desc()).limit(5).all()
+            
             # Mark as read
             Message.query.filter_by(receiver_id=current_user.id, sender_id=selected_user_id, is_read=False).update({Message.is_read: True})
             db.session.commit()
             
-        return render_template('admin_messages.html', users=users, chats=chats, selected_user_id=selected_user_id)
+        return render_template('admin_messages.html', users=users, chats=chats, selected_user_id=selected_user_id, student_context=student_context)
     else:
         # Student sees messages with admin and broadcasts
         admin = User.query.filter_by(role='admin').first()
