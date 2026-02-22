@@ -252,10 +252,12 @@
                 </div>
             </div>
             <a href="{{ url_for('admin_dashboard') }}">Dashboard</a>
+            <a href="{{ url_for('messages') }}">Messages</a>
             <a href="{{ url_for('admin_activity_logs') }}">System Activity</a>
             <a href="{{ url_for('history') }}">History</a>
             {% else %}
-            <a href="{{ url_for('student_dashboard') }}">Student Hub</a>
+            <a href="{{ url_for('student_dashboard') }}">Hub</a>
+            <a href="{{ url_for('messages') }}">Messages</a>
             <a href="{{ url_for('student_profile') }}" style="display: flex; align-items: center; gap: 8px;">
                 <div
                     style="width: 28px; height: 28px; border-radius: 50%; overflow: hidden; background: rgba(255,255,255,0.1); border: 1px solid var(--primary); display: flex; align-items: center; justify-content: center;">

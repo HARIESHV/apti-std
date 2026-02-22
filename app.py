@@ -133,6 +133,18 @@ class Notification(db.Model):
     read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=get_now_ist)
 
+class Message(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    sender_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    receiver_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True) # None for broadcast
+    content = db.Column(db.Text, nullable=False)
+    is_read = db.Column(db.Boolean, default=False)
+    is_broadcast = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=get_now_ist)
+    
+    sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
+    receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_messages')
+
 # --- Helpers ---
 
 def fix_id(obj):
@@ -197,6 +209,9 @@ def init_db():
                 # Notification table
                 try: conn.execute(db.text("ALTER TABLE notification ADD COLUMN type VARCHAR(50)"))
                 except: pass
+                
+                # Message table (handled by create_all normally, but let's be safe)
+                # No columns to add since it's a new table.
                 
                 conn.commit()
         except:
@@ -772,6 +787,61 @@ def submit_answer():
 
     flash('Submitted!')
     return redirect(url_for('student_dashboard'))
+
+@app.route('/messages')
+@login_required
+def messages():
+    if current_user.role == 'admin':
+        # Admin sees all conversations
+        users = User.query.filter_by(role='student').all()
+        # For admin, we'll show messages with a specific user if selected
+        selected_user_id = request.args.get('user_id', type=int)
+        chats = []
+        if selected_user_id:
+            chats = Message.query.filter(
+                ((Message.sender_id == current_user.id) & (Message.receiver_id == selected_user_id)) |
+                ((Message.sender_id == selected_user_id) & (Message.receiver_id == current_user.id)) |
+                (Message.is_broadcast == True)
+            ).order_by(Message.created_at.asc()).all()
+            # Mark as read
+            Message.query.filter_by(receiver_id=current_user.id, sender_id=selected_user_id, is_read=False).update({Message.is_read: True})
+            db.session.commit()
+            
+        return render_template('admin_messages.html', users=users, chats=chats, selected_user_id=selected_user_id)
+    else:
+        # Student sees messages with admin and broadcasts
+        admin = User.query.filter_by(role='admin').first()
+        chats = Message.query.filter(
+            ((Message.sender_id == current_user.id) & (Message.receiver_id == admin.id)) |
+            ((Message.sender_id == admin.id) & (Message.receiver_id == current_user.id)) |
+            (Message.is_broadcast == True)
+        ).order_by(Message.created_at.asc()).all()
+        # Mark as read
+        Message.query.filter_by(receiver_id=current_user.id, is_read=False).update({Message.is_read: True})
+        db.session.commit()
+        return render_template('messages.html', chats=chats, admin=admin)
+
+@app.route('/messages/send', methods=['POST'])
+@login_required
+def send_message():
+    receiver_id = request.form.get('receiver_id', type=int)
+    content = request.form.get('content')
+    is_broadcast = request.form.get('is_broadcast') == 'true'
+    
+    if not content:
+        return redirect(url_for('messages'))
+        
+    if is_broadcast and current_user.role == 'admin':
+        msg = Message(sender_id=current_user.id, content=content, is_broadcast=True)
+    else:
+        msg = Message(sender_id=current_user.id, receiver_id=receiver_id, content=content)
+    
+    db.session.add(msg)
+    db.session.commit()
+    
+    if current_user.role == 'admin':
+        return redirect(url_for('messages', user_id=receiver_id))
+    return redirect(url_for('messages'))
 
 @app.route('/admin/notifications')
 @login_required

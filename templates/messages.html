@@ -1,0 +1,81 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="animate-fade-in" style="margin-bottom: 3rem;">
+    <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; letter-spacing: -1px;">
+        Communication <span class="text-gradient">Hub</span>
+    </h1>
+    <p style="color: var(--text-dim); font-size: 1.1rem;">Message the Administrator or view campus-wide broadcasts.</p>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr; gap: 2rem; max-width: 800px; margin: 0 auto;">
+    <div class="card glass-panel" style="padding: 0; display: flex; flex-direction: column; height: 600px;">
+        <div
+            style="padding: 1.5rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; align-items: center; gap: 1rem; background: rgba(255,255,255,0.02);">
+            <div
+                style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary); display: flex; align-items: center; justify-content: center; color: white; font-weight: 800;">
+                A
+            </div>
+            <div>
+                <h2 style="font-size: 1.1rem; font-weight: 700; margin: 0;">Admin Support</h2>
+                <div style="font-size: 0.75rem; color: var(--accent); font-weight: 700;">Official Channel</div>
+            </div>
+        </div>
+
+        <div id="chat-messages"
+            style="flex-grow: 1; overflow-y: auto; padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; background: rgba(0,0,0,0.1);">
+            {% if chats %}
+            {% for msg in chats %}
+            <div
+                style="max-width: 85%; align-self: {% if msg.sender_id == current_user.id %}flex-end{% else %}flex-start{% endif %};">
+                <div style="padding: 1rem 1.25rem; border-radius: 16px; border-top-{% if msg.sender_id == current_user.id %}right{% else %}left{% endif %}-radius: 4px;
+                            {% if msg.is_broadcast %}
+                            background: rgba(139, 92, 246, 0.1); border: 2px solid var(--secondary); color: var(--text-main); align-self: center; text-align: center; margin: 1rem 0; width: 100%; max-width: none;
+                            {% elif msg.sender_id == current_user.id %}
+                            background: var(--primary); color: white;
+                            {% else %}
+                            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); color: var(--text-main);
+                            {% endif %}">
+                    {% if msg.is_broadcast %}
+                    <div
+                        style="font-size: 0.7rem; font-weight: 800; color: var(--secondary); margin-bottom: 4px; text-transform: uppercase;">
+                        Campus Broadcast</div>
+                    {% endif %}
+                    <div style="font-size: 0.95rem; line-height: 1.5;">{{ msg.content }}</div>
+                </div>
+                <div
+                    style="font-size: 0.7rem; color: var(--text-dim); margin-top: 6px; text-align: {% if msg.sender_id == current_user.id %}right{% else %}left{% endif %};">
+                    {{ msg.created_at.strftime('%H:%M | %b %d') }}
+                </div>
+            </div>
+            {% endfor %}
+            {% else %}
+            <div style="text-align: center; padding: 4rem 2rem; color: var(--text-dim);">
+                <svg style="width:48px;height:48px;margin-bottom:1rem;opacity:0.3" viewBox="0 0 24 24">
+                    <path fill="currentColor"
+                        d="M20,2H4A2,2 0 0,0 2,4V22L6,18H20A2,2 0 0,0 22,16V4A2,2 0 0,0 20,2M20,16H5.17L4,17.17V4H20V16Z" />
+                </svg>
+                <p>No messages yet. Send a query to the administrator!</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <form action="{{ url_for('send_message') }}" method="POST"
+            style="padding: 1.5rem; border-top: 1px solid rgba(255,255,255,0.05); display: flex; gap: 1rem; background: rgba(255,255,255,0.02);">
+            <input type="hidden" name="receiver_id" value="{{ admin.id }}">
+            <input type="text" name="content" required placeholder="Type your message here..."
+                style="flex-grow: 1; padding: 0.8rem 1.25rem; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.1); border-radius: 12px; color: white;">
+            <button type="submit" class="btn btn-primary" style="padding: 0 1.5rem;">
+                <svg style="width:20px;height:20px" viewBox="0 0 24 24">
+                    <path fill="currentColor" d="M2,21L23,12L2,3V10L17,12L2,14V21Z" />
+                </svg>
+            </button>
+        </form>
+    </div>
+</div>
+
+<script>
+    const chatBox = document.getElementById('chat-messages');
+    chatBox.scrollTop = chatBox.scrollHeight;
+</script>
+{% endblock %}
