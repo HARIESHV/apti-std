@@ -406,47 +406,16 @@ def admin_dashboard():
         return redirect(url_for('student_dashboard'))
     
     questions = Question.query.order_by(Question.created_at.desc()).all()
-    submissions = Answer.query.order_by(Answer.submitted_at.desc()).limit(10).all()
     all_users = User.query.filter_by(role='student').all()
-    
-    # Process submissions for display
-    results = []
-    for s in submissions:
-        student = db.session.get(User, s.student_id)
-        question = db.session.get(Question, s.question_id)
-        results.append({
-            'id': s.id,
-            'student_id': s.student_id,
-            'student_name': student.full_name if student else 'Unknown',
-            'profile_image': student.profile_image if student else None,
-            'question': question if question else {'text': 'Deleted Question'},
-            'submitted_at': s.submitted_at,
-            'is_correct': s.is_correct
-        })
         
     classroom = Classroom.query.first()
     meet_links = MeetLink.query.order_by(MeetLink.created_at.desc()).all()
-    activity_logs = ActivityLog.query.order_by(ActivityLog.event_time.desc()).limit(10).all()
-
-    # Platform stats
-    total_solved = Answer.query.filter_by(is_correct=True).count()
-    total_attempts = Answer.query.count()
-    
-    platform_stats = {
-        'total_solved': total_solved,
-        'total_attempts': total_attempts,
-        'accuracy': (total_solved / total_attempts * 100) if total_attempts > 0 else 0
-    }
 
     return render_template('admin_dashboard.html', 
                          questions=questions, 
-                         members=all_users[:8], 
-                         results=results,
                          classroom=classroom,
                          meet_links=meet_links,
-                         activity_logs=activity_logs,
-                         all_users=all_users,
-                         platform_stats=platform_stats)
+                         all_users=all_users)
 
 @app.route('/admin/stats')
 @login_required
