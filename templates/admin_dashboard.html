@@ -23,6 +23,44 @@
     </div>
 </div>
 
+<!-- Notification Settings Quick-Fix -->
+<div id="notif-setup-box" class="glass-panel"
+    style="display: none; padding: 1rem 2rem; margin-bottom: 2.5rem; background: rgba(99, 102, 241, 0.05); border: 1px solid var(--primary); border-radius: 1rem; align-items: center; justify-content: space-between; gap: 2rem;">
+    <div style="display: flex; align-items: center; gap: 1rem;">
+        <div
+            style="width: 40px; height: 40px; background: rgba(99, 102, 241, 0.1); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: var(--primary);">
+            <svg style="width:24px;height:24px" viewBox="0 0 24 24">
+                <path fill="currentColor"
+                    d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,16.5L6.5,12L7.91,10.59L11,13.67L16.09,8.58L17.5,10L11,16.5Z" />
+            </svg>
+        </div>
+        <div>
+            <h3 style="font-size: 1rem; font-weight: 700;">Desktop Notifications</h3>
+            <p style="font-size: 0.85rem; color: var(--text-dim);">Enable alerts to monitor student activity even when
+                working in other tabs.</p>
+        </div>
+    </div>
+    <button onclick="requestNotifPermission()" class="btn btn-primary"
+        style="padding: 0.6rem 1.25rem; font-size: 0.8rem; white-space: nowrap;">
+        Enable Alerts
+    </button>
+</div>
+
+<script>
+    if ("Notification" in window && Notification.permission !== "granted") {
+        document.getElementById('notif-setup-box').style.display = 'flex';
+    }
+
+    function requestNotifPermission() {
+        Notification.requestPermission().then(permission => {
+            if (permission === "granted") {
+                document.getElementById('notif-setup-box').style.display = 'none';
+                new Notification("Success!", { body: "Desktop notifications are now active.", icon: "/static/favicon.ico" });
+            }
+        });
+    }
+</script>
+
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; align-items: start; margin-bottom: 3.5rem;">
     <div style="display: grid; gap: 2.5rem;">
         <!-- Classroom Management Section -->

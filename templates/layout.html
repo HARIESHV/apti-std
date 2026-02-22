@@ -329,11 +329,26 @@
                 if (data.count > 0) {
                     // Show desktop alert if count increased and not first load
                     if (!isFirstLoad && data.count > lastNotifCount && "Notification" in window && Notification.permission === "granted") {
-                        const newCount = data.count - lastNotifCount;
                         const latest = data.notifications[0];
-                        new Notification("New Submission - AptitudePro", {
-                            body: `${latest.student_name} and ${newCount - 1} others finished questions.`,
-                            icon: "/static/favicon.ico"
+                        let title = "AptitudePro Update";
+                        let body = "";
+
+                        if (latest.type === 'login') {
+                            title = "Student Login";
+                            body = `${latest.student_name} just logged in.`;
+                        } else if (latest.type === 'register') {
+                            title = "New Registration!";
+                            body = `${latest.student_name} joined the platform.`;
+                        } else {
+                            title = "New Submission";
+                            body = `${latest.student_name} answered a question.`;
+                        }
+
+                        new Notification(title, {
+                            body: body,
+                            icon: "/static/favicon.ico",
+                            silent: false,
+                            tag: 'aptipro-notif' // Prevents duplicate spam
                         });
                     }
 
