@@ -167,23 +167,27 @@ def init_db():
     with app.app_context():
         db.create_all()
         
-        # 🛡️ Migration: Add binary columns to existing SQLite DB if they don't exist
+        # 🛡️ Migration: Add binary columns to existing databases if they don't exist
         try:
             with db.engine.connect() as conn:
+                # Detect if we are on SQLite
+                is_sqlite = db.engine.url.drivername == 'sqlite'
+                blob_type = "BLOB" if is_sqlite else "BYTEA"
+                
                 # User table
-                try: conn.execute(db.text("ALTER TABLE user ADD COLUMN profile_image_data BLOB"))
+                try: conn.execute(db.text(f"ALTER TABLE \"user\" ADD COLUMN profile_image_data {blob_type}"))
                 except: pass
-                try: conn.execute(db.text("ALTER TABLE user ADD COLUMN profile_image_mimetype VARCHAR(50)"))
+                try: conn.execute(db.text("ALTER TABLE \"user\" ADD COLUMN profile_image_mimetype VARCHAR(50)"))
                 except: pass
                 
                 # Question table
-                try: conn.execute(db.text("ALTER TABLE question ADD COLUMN image_data BLOB"))
+                try: conn.execute(db.text(f"ALTER TABLE question ADD COLUMN image_data {blob_type}"))
                 except: pass
                 try: conn.execute(db.text("ALTER TABLE question ADD COLUMN image_mimetype VARCHAR(50)"))
                 except: pass
                 
                 # Answer table
-                try: conn.execute(db.text("ALTER TABLE answer ADD COLUMN file_data BLOB"))
+                try: conn.execute(db.text(f"ALTER TABLE answer ADD COLUMN file_data {blob_type}"))
                 except: pass
                 try: conn.execute(db.text("ALTER TABLE answer ADD COLUMN file_mimetype VARCHAR(50)"))
                 except: pass
