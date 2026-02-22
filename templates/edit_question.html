@@ -53,7 +53,7 @@
                         <span
                             style="display: block; margin-bottom: 0.5rem; font-size: 0.75rem; color: var(--primary);">CURRENT
                             IMAGE</span>
-                        <img src="{{ url_for('static', filename='question_images/' + q.image_file) }}"
+                        <img src="{{ url_for('serve_question_image', question_id=q.id) }}"
                             style="max-width: 200px; border-radius: 8px;">
                     </div>
                     {% endif %}

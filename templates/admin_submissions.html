@@ -50,10 +50,25 @@
                     <td style="padding: 1.5rem;">
                         <div style="display: flex; align-items: center; gap: 12px;">
                             <div
-                                style="width: 32px; height: 32px; background: rgba(139, 92, 246, 0.1); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: var(--secondary);">
-                                {{ r.student.username[:1].upper() }}
+                                style="width: 32px; height: 32px; background: rgba(139, 92, 246, 0.1); border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; color: var(--secondary); border: 1px solid rgba(255,255,255,0.1);">
+                                {% if r.student.profile_image %}
+                                <img src="{{ url_for('serve_profile_pic', user_id=r.student.id, filename=r.student.profile_image) }}"
+                                    style="width: 100%; height: 100%; object-fit: cover;">
+                                {% else %}
+                                <svg style="width: 16px; height: 16px; color: var(--text-dim);" viewBox="0 0 24 24">
+                                    <path fill="currentColor"
+                                        d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+                                </svg>
+                                {% endif %}
                             </div>
-                            <div style="font-weight: 600; color: var(--text-main);">{{ r.student.full_name }}</div>
+                            <a href="{{ url_for('admin_view_user', user_id=r.student.id) }}"
+                                style="text-decoration: none;">
+                                <div style="font-weight: 600; color: var(--text-main); transition: color 0.2s;"
+                                    onmouseover="this.style.color='var(--primary)'"
+                                    onmouseout="this.style.color='var(--text-main)'">
+                                    {{ r.student.full_name }}
+                                </div>
+                            </a>
                         </div>
                     </td>
                     <td style="padding: 1.5rem; max-width: 350px;">
@@ -69,7 +84,7 @@
                     </td>
                     <td style="padding: 1.5rem;">
                         {% if r.file_path %}
-                        <a href="{{ url_for('download_file', filename=r.file_path) }}" target="_blank" class="btn"
+                        <a href="{{ url_for('serve_submission_file', answer_id=r.id) }}" target="_blank" class="btn"
                             style="color: var(--primary); background: rgba(99, 102, 241, 0.1); padding: 0.5rem 1rem; font-size: 0.8rem; border: 1px solid rgba(99, 102, 241, 0.2);">
                             View Document
                         </a>

@@ -191,8 +191,7 @@
                 <div id="content-{{ q.id }}" style="transition: all 0.5s ease; filter: blur(8px);">
                     {% if q.image_file %}
                     <div style="margin-bottom: 2rem;">
-                        <img src="{{ url_for('static', filename='question_images/' + q.image_file) }}"
-                            alt="Question Diagram"
+                        <img src="{{ url_for('serve_question_image', question_id=q.id) }}" alt="Question Diagram"
                             style="max-width: 100%; max-height: 400px; border-radius: 12px; border: 1px solid var(--glass-border); display: block;">
                     </div>
                     {% endif %}

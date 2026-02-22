@@ -2,52 +2,157 @@
 
 {% block content %}
 <div class="animate-fade-in" style="max-width: 500px; margin: 4rem auto;">
-    <div class="card" style="position: relative; overflow: hidden;">
+    <div class="card" style="position: relative; overflow: hidden; padding: 2.5rem;">
         <div
             style="position: absolute; top: 0; left: 0; width: 100%; height: 5px; background: linear-gradient(to right, var(--primary), var(--secondary));">
         </div>
 
-        <div style="text-align: center; margin-bottom: 2.5rem;">
-            <div
-                style="width: 60px; height: 60px; background: rgba(99, 102, 241, 0.1); border-radius: 1rem; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem;">
-                <svg style="width:30px; height:30px; color: var(--primary);" viewBox="0 0 24 24">
-                    <path fill="currentColor"
-                        d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
-                </svg>
-            </div>
-            <h1 style="font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem;">Welcome Back</h1>
-            <p style="color: var(--text-dim);">Sign in to your AptitudePro account</p>
+        <!-- Tab Headers -->
+        <div style="display: flex; gap: 2rem; margin-bottom: 2.5rem; border-bottom: 1px solid var(--glass-border);">
+            <button id="login-tab" onclick="switchTab('login')"
+                style="padding: 1rem 0.5rem; background: none; border: none; font-weight: 800; font-size: 1.1rem; color: var(--primary); cursor: pointer; border-bottom: 3px solid var(--primary); transition: all 0.3s ease;">
+                Sign In
+            </button>
+            <button id="register-tab" onclick="switchTab('register')"
+                style="padding: 1rem 0.5rem; background: none; border: none; font-weight: 800; font-size: 1.1rem; color: var(--text-dim); cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s ease;">
+                Register
+            </button>
         </div>
 
-        <form method="POST" style="display: grid; gap: 1.5rem;">
-            <div>
-                <label
-                    style="display: block; margin-bottom: 0.75rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 600;">Username</label>
-                <input type="text" name="username" placeholder="Enter your username" required>
+        <!-- Login Form -->
+        <div id="login-section">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h1 style="font-size: 1.8rem; font-weight: 800; margin-bottom: 0.5rem;">Welcome Back</h1>
+                <p style="color: var(--text-dim);">Access your learning dashboard</p>
             </div>
-            <div>
-                <label
-                    style="display: block; margin-bottom: 0.75rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 600;">Password</label>
-                <input type="password" name="password" placeholder="••••••••" required>
-            </div>
-            <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 1rem;">
-                Sign In
-                <svg style="width:20px; height:20px" viewBox="0 0 24 24">
-                    <path fill="currentColor"
-                        d="M10,17L15,12L10,7V10H2V14H10V17M21,2H7C5.89,2 5,2.89 5,4V8H7V4H21V20H7V16H5V20C5,21.11 5.89,22 7,22H21C22.11,22 23,21.11 23,20V4C23,2.89 22.11,2 21,2Z" />
-                </svg>
-            </button>
-        </form>
+            <form action="{{ url_for('login') }}" method="POST" style="display: grid; gap: 1.5rem;">
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.75rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 600;">Username</label>
+                    <input type="text" name="username" placeholder="alex_solver" required>
+                </div>
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.75rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 600;">Password</label>
+                    <input type="password" name="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn btn-primary"
+                    style="width: 100%; justify-content: center; padding: 1.1rem;">
+                    Enter Dashboard
+                    <svg style="width:20px; height:20px" viewBox="0 0 24 24">
+                        <path fill="currentColor"
+                            d="M10,17L15,12L10,7V10H2V14H10V17M21,2H7C5.89,2 5,2.89 5,4V8H7V4H21V20H7V16H5V20C5,21.11 5.89,22 7,22H21C22.11,22 23,21.11 23,20V4C23,2.89 22.11,2 21,2Z" />
+                    </svg>
+                </button>
+            </form>
+        </div>
 
-        <div
-            style="text-align: center; margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--glass-border);">
-            <p style="color: var(--text-dim); font-size: 0.95rem;">
-                First time here?
-                <a href="{{ url_for('register') }}"
-                    style="color: var(--primary); text-decoration: none; font-weight: 600; margin-left: 5px;">Register
-                    your student account &rarr;</a>
-            </p>
+        <!-- Register Form (Hidden by default) -->
+        <div id="register-section" style="display: none;">
+            <div style="text-align: center; margin-bottom: 2rem;">
+                <h1 style="font-size: 1.8rem; font-weight: 800; margin-bottom: 0.5rem;">Create Account</h1>
+                <p style="color: var(--text-dim);">Join the aptitude community</p>
+            </div>
+            <form action="{{ url_for('register') }}" method="POST" enctype="multipart/form-data"
+                style="display: grid; gap: 1.25rem;">
+                <!-- Profile Image Upload with Preview -->
+                <div
+                    style="display: flex; flex-direction: column; align-items: center; gap: 0.75rem; margin-bottom: 0.25rem;">
+                    <div id="image-preview" onclick="document.getElementById('profile_image').click()"
+                        style="width: 80px; height: 80px; border-radius: 50%; overflow: hidden; border: 3px solid var(--primary); background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                        <svg id="placeholder-icon" style="width: 32px; height: 32px; color: var(--text-dim);"
+                            viewBox="0 0 24 24">
+                            <path fill="currentColor"
+                                d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M12,20C10,20 8.11,19.39 6.56,18.35L7.94,16.6C8.9,17.35 10.37,17.8 12,17.8C15.2,17.8 17.8,15.2 17.8,12C17.8,11.24 17.65,10.5 17.37,9.83L19.35,8.27C19.77,9.41 20,10.68 20,12A8,8 0 0,1 12,20M12,4C14,4 15.89,4.61 17.44,5.65L16.06,7.4C15.1,6.65 13.63,6.2 12,6.2C8.8,6.2 6.2,8.8 6.2,12C6.2,12.76 6.35,13.5 6.63,14.17L4.65,15.73C4.23,14.59 4,13.32 4,12A8,8 0 0,1 12,4Z" />
+                        </svg>
+                        <img id="preview-img" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                    </div>
+                    <input type="file" id="profile_image" name="profile_image" accept="image/*" style="display: none;"
+                        onchange="previewImage(this)">
+                    <span style="font-size: 0.75rem; color: var(--text-dim);">Photo (Optional)</span>
+                </div>
+
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Full
+                        Name</label>
+                    <input type="text" name="full_name" placeholder="John Doe" required style="padding: 0.8rem;">
+                </div>
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Username</label>
+                    <input type="text" name="username" placeholder="john_123" required style="padding: 0.8rem;">
+                </div>
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Password</label>
+                    <input type="password" name="password" placeholder="••••••••" required style="padding: 0.8rem;">
+                </div>
+                <button type="submit" class="btn btn-primary"
+                    style="width: 100%; justify-content: center; padding: 1.1rem; margin-top: 0.5rem;">
+                    Create Account
+                    <svg style="width:20px; height:20px" viewBox="0 0 24 24">
+                        <path fill="currentColor"
+                            d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M6,10V7H4V10H1V12H4V15H6V12H9V10M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12Z" />
+                    </svg>
+                </button>
+            </form>
         </div>
     </div>
 </div>
+
+<script>
+    // Initialize tab based on URL parameter
+    window.addEventListener('DOMContentLoaded', (event) => {
+        const urlParams = new URLSearchParams(window.location.search);
+        const tab = urlParams.get('tab');
+        if (tab === 'register') {
+            switchTab('register');
+        }
+    });
+
+    function switchTab(tab) {
+        const loginSection = document.getElementById('login-section');
+        const registerSection = document.getElementById('register-section');
+        const loginTab = document.getElementById('login-tab');
+        const registerTab = document.getElementById('register-tab');
+
+        if (tab === 'login') {
+            loginSection.style.display = 'block';
+            registerSection.style.display = 'none';
+            loginTab.style.color = 'var(--primary)';
+            loginTab.style.borderBottomColor = 'var(--primary)';
+            registerTab.style.color = 'var(--text-dim)';
+            registerTab.style.borderBottomColor = 'transparent';
+        } else {
+            loginSection.style.display = 'none';
+            registerSection.style.display = 'block';
+            registerTab.style.color = 'var(--primary)';
+            registerTab.style.borderBottomColor = 'var(--primary)';
+            loginTab.style.color = 'var(--text-dim)';
+            loginTab.style.borderBottomColor = 'transparent';
+        }
+    }
+
+    function previewImage(input) {
+        const preview = document.getElementById('preview-img');
+        const icon = document.getElementById('placeholder-icon');
+        const file = input.files[0];
+        const reader = new FileReader();
+
+        reader.onloadend = function () {
+            preview.src = reader.result;
+            preview.style.display = 'block';
+            icon.style.display = 'none';
+        }
+
+        if (file) {
+            reader.readAsDataURL(file);
+        } else {
+            preview.src = "";
+            preview.style.display = 'none';
+            icon.style.display = 'block';
+        }
+    }
+</script>
 {% endblock %}

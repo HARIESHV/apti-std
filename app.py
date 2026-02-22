@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, send_file, send_from_directory
+from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, send_file, send_from_directory, make_response
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -10,6 +10,7 @@ import csv
 import pytz
 from io import StringIO, BytesIO
 from dotenv import load_dotenv
+
 
 # Import meet_utils if available
 try:
@@ -29,8 +30,12 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', secrets.token_hex(16))
 app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['QUESTION_IMAGE_FOLDER'] = 'static/question_images'
+app.config['PROFILE_IMAGE_FOLDER'] = 'static/profile_pics'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB limit
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ.get('DATABASE_URL', 'sqlite:///aptipro.db')
+db_url = os.environ.get('DATABASE_URL', 'sqlite:///aptipro.db')
+if db_url.startswith("postgres://"):
+    db_url = db_url.replace("postgres://", "postgresql://", 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
@@ -38,6 +43,7 @@ db = SQLAlchemy(app)
 # Ensure directories exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['QUESTION_IMAGE_FOLDER'], exist_ok=True)
+os.makedirs(app.config['PROFILE_IMAGE_FOLDER'], exist_ok=True)
 
 # --- Models ---
 
@@ -47,6 +53,9 @@ class User(UserMixin, db.Model):
     full_name = db.Column(db.String(120))
     password = db.Column(db.String(200), nullable=False)
     role = db.Column(db.String(20), default='student')
+    profile_image = db.Column(db.String(100))
+    profile_image_data = db.Column(db.LargeBinary) # Store in DB
+    profile_image_mimetype = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=get_now_ist)
     
     answers = db.relationship('Answer', backref='student', lazy=True)
@@ -65,6 +74,8 @@ class Question(db.Model):
     meet_link = db.Column(db.String(500))
     time_limit = db.Column(db.Integer, default=10) # minutes
     image_file = db.Column(db.String(100))
+    image_data = db.Column(db.LargeBinary) # Store in DB
+    image_mimetype = db.Column(db.String(50))
     created_at = db.Column(db.DateTime, default=get_now_ist)
     
     answers = db.relationship('Answer', backref='question', lazy=True)
@@ -76,6 +87,9 @@ class Answer(db.Model):
     question_id = db.Column(db.Integer, db.ForeignKey('question.id'), nullable=False)
     selected_option = db.Column(db.String(1))
     file_path = db.Column(db.String(200))
+    file_data = db.Column(db.LargeBinary) # Store in DB
+    file_mimetype = db.Column(db.String(50))
+    file_name = db.Column(db.String(100))
     is_correct = db.Column(db.Boolean)
     is_expired = db.Column(db.Boolean, default=False)
     submitted_at = db.Column(db.DateTime, default=get_now_ist)
@@ -100,6 +114,13 @@ class MeetLink(db.Model):
     url = db.Column(db.String(500))
     is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=get_now_ist)
+
+class ActivityLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    action = db.Column(db.String(100))
+    details = db.Column(db.Text)
+    event_time = db.Column(db.DateTime, default=get_now_ist)
 
 class Notification(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -138,13 +159,39 @@ login_manager.login_view = 'login'
 
 @login_manager.user_loader
 def load_user(user_id):
-    return User.query.get(int(user_id))
+    return db.session.get(User, int(user_id))
 
 # --- Initialization ---
 
 def init_db():
     with app.app_context():
         db.create_all()
+        
+        # 🛡️ Migration: Add binary columns to existing SQLite DB if they don't exist
+        try:
+            with db.engine.connect() as conn:
+                # User table
+                try: conn.execute(db.text("ALTER TABLE user ADD COLUMN profile_image_data BLOB"))
+                except: pass
+                try: conn.execute(db.text("ALTER TABLE user ADD COLUMN profile_image_mimetype VARCHAR(50)"))
+                except: pass
+                
+                # Question table
+                try: conn.execute(db.text("ALTER TABLE question ADD COLUMN image_data BLOB"))
+                except: pass
+                try: conn.execute(db.text("ALTER TABLE question ADD COLUMN image_mimetype VARCHAR(50)"))
+                except: pass
+                
+                # Answer table
+                try: conn.execute(db.text("ALTER TABLE answer ADD COLUMN file_data BLOB"))
+                except: pass
+                try: conn.execute(db.text("ALTER TABLE answer ADD COLUMN file_mimetype VARCHAR(50)"))
+                except: pass
+                try: conn.execute(db.text("ALTER TABLE answer ADD COLUMN file_name VARCHAR(100)"))
+                except: pass
+                conn.commit()
+        except:
+            pass
         
         # Initialize Classroom
         if not Classroom.query.first():
@@ -166,6 +213,8 @@ def init_db():
             db.session.add(admin)
             db.session.commit()
             print("Default admin created: admin / admin123")
+            
+        pass
 
 init_db()
 
@@ -191,7 +240,14 @@ def login():
         
         if user and check_password_hash(user.password, password):
             login_user(user)
-            return redirect(url_for('index'))
+            
+            # Log login event
+            db.session.add(ActivityLog(user_id=user.id, action="LOGIN", details=f"User {user.username} logged in"))
+            db.session.commit()
+            
+            resp = make_response(redirect(url_for('index')))
+            resp.set_cookie('returning_user', 'true', max_age=30*24*60*60)
+            return resp
         flash('Invalid credentials')
     return render_template('login.html')
 
@@ -210,27 +266,63 @@ def register():
         
         if current_members >= max_members:
             flash(f'Registration limit reached ({max_members} members).')
-            return redirect(url_for('register'))
+            return redirect(url_for('login', tab='register'))
 
         if User.query.filter_by(username=username).first():
             flash('Username already exists')
-            return redirect(url_for('register'))
+            return redirect(url_for('login', tab='register'))
             
+        image = request.files.get('profile_image')
+        image_data = None
+        image_mimetype = None
+        image_filename = None
+        if image and allowed_file(image.filename):
+            image_data = image.read()
+            image_mimetype = image.mimetype
+            image_filename = image.filename
+
         hashed_pw = generate_password_hash(password)
         new_user = User(
             username=username,
             full_name=full_name,
             password=hashed_pw,
-            role='student'
+            role='student',
+            profile_image=image_filename,
+            profile_image_data=image_data,
+            profile_image_mimetype=image_mimetype
         )
         db.session.add(new_user)
         db.session.commit()
         
+        # Log registration event
+        db.session.add(ActivityLog(user_id=new_user.id, action="REGISTER", details=f"New user registered: {new_user.username}"))
+        db.session.commit()
+        
         login_user(new_user)
         flash('Account created!')
-        return redirect(url_for('student_dashboard'))
+        resp = make_response(redirect(url_for('student_dashboard')))
+        resp.set_cookie('returning_user', 'true', max_age=30*24*60*60)
+        return resp
         
-    return render_template('register.html')
+@app.route('/history')
+@login_required
+def history():
+    if current_user.role != 'admin':
+        return redirect(url_for('student_dashboard'))
+    submissions = Answer.query.order_by(Answer.submitted_at.desc()).all()
+    all_users = User.query.filter_by(role='student').all()
+    results = []
+    for s in submissions:
+        student = db.session.get(User, s.student_id)
+        question = db.session.get(Question, s.question_id)
+        results.append({
+            'student': student,
+            'question': question,
+            'submitted_at': s.submitted_at,
+            'selected_option': s.selected_option,
+            'is_correct': s.is_correct
+        })
+    return render_template('history.html', results=results, all_users=all_users)
 
 @app.route('/logout')
 @login_required
@@ -253,11 +345,13 @@ def admin_dashboard():
     # Process submissions for display
     results = []
     for s in submissions:
-        student = User.query.get(s.student_id)
-        question = Question.query.get(s.question_id)
+        student = db.session.get(User, s.student_id)
+        question = db.session.get(Question, s.question_id)
         results.append({
             'id': s.id,
+            'student_id': s.student_id,
             'student_name': student.full_name if student else 'Unknown',
+            'profile_image': student.profile_image if student else None,
             'question': question if question else {'text': 'Deleted Question'},
             'submitted_at': s.submitted_at,
             'is_correct': s.is_correct
@@ -265,13 +359,76 @@ def admin_dashboard():
         
     classroom = Classroom.query.first()
     meet_links = MeetLink.query.order_by(MeetLink.created_at.desc()).all()
+    activity_logs = ActivityLog.query.order_by(ActivityLog.event_time.desc()).limit(10).all()
+
     return render_template('admin_dashboard.html', 
                          questions=questions, 
                          members=all_users[:8], 
                          results=results,
                          classroom=classroom,
                          meet_links=meet_links,
+                         activity_logs=activity_logs,
                          all_users=all_users)
+
+@app.route('/student/profile', methods=['GET', 'POST'])
+@login_required
+def student_profile():
+    if current_user.role != 'student':
+        return redirect(url_for('admin_dashboard'))
+    
+    if request.method == 'POST':
+        full_name = request.form.get('full_name')
+        new_password = request.form.get('password')
+        image = request.files.get('profile_image')
+        
+        current_user.full_name = full_name
+        if new_password:
+            current_user.password = generate_password_hash(new_password)
+            
+        if image and allowed_file(image.filename):
+            current_user.profile_image_data = image.read()
+            current_user.profile_image_mimetype = image.mimetype
+            current_user.profile_image = image.filename
+            
+            # Log event to database
+            new_log = ActivityLog(user_id=current_user.id, action="PROFILE_PIC_UPDATE", details=f"Uploaded {image.filename} to Database")
+            db.session.add(new_log)
+        
+        db.session.commit()
+        flash('Profile updated successfully!')
+        return redirect(url_for('student_profile'))
+        
+    return render_template('student_profile.html', user=current_user)
+
+@app.route('/admin/user/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def admin_view_user(user_id):
+    if current_user.role != 'admin':
+        return redirect(url_for('student_dashboard'))
+    
+    user = db.session.get(User, user_id)
+    if not user:
+        flash('User not found')
+        return redirect(url_for('admin_members_dashboard'))
+    
+    if request.method == 'POST':
+        user.full_name = request.form.get('full_name')
+        user.username = request.form.get('username')
+            
+        db.session.commit()
+        flash('User profile updated!')
+        return redirect(url_for('admin_view_user', user_id=user.id))
+        
+    # Get user stats
+    user_answers = Answer.query.filter_by(student_id=user.id).all()
+    correct_count = sum(1 for a in user_answers if a.is_correct)
+    stats = {
+        'total': len(user_answers),
+        'correct': correct_count,
+        'accuracy': (correct_count / len(user_answers) * 100) if user_answers else 0
+    }
+    
+    return render_template('admin_view_user.html', student=user, stats=stats, submissions=user_answers)
 
 @app.route('/admin/questions')
 @login_required
@@ -305,7 +462,7 @@ def admin_submissions_dashboard():
 def admin_members_dashboard():
     if current_user.role != 'admin': return redirect(url_for('student_dashboard'))
     members = User.query.filter_by(role='student').all()
-    return render_template('admin_members.html', all_users=members)
+    return render_template('admin_students.html', all_users=members)
 
 @app.route('/admin/post_question', methods=['GET', 'POST'])
 @login_required
@@ -325,16 +482,19 @@ def post_question():
     time_limit = request.form.get('time_limit', 10, type=int)
     
     image = request.files.get('image')
+    image_data = None
+    image_mimetype = None
     image_filename = None
     if image and allowed_file(image.filename):
-        image_filename = secure_filename(f"q_{datetime.now().timestamp()}_{image.filename}")
-        image.save(os.path.join(app.config['QUESTION_IMAGE_FOLDER'], image_filename))
+        image_data = image.read()
+        image_mimetype = image.mimetype
+        image_filename = image.filename
     
     new_q = Question(
         text=text, topic=topic, option_a=option_a, option_b=option_b, 
         option_c=option_c, option_d=option_d, correct_answer=correct_answer, 
         explanation=explanation, meet_link=meet_link, time_limit=time_limit,
-        image_file=image_filename
+        image_file=image_filename, image_data=image_data, image_mimetype=image_mimetype
     )
     db.session.add(new_q)
     db.session.commit()
@@ -376,9 +536,9 @@ def edit_question(question_id):
         
         image = request.files.get('image')
         if image and image.filename:
-            image_filename = secure_filename(f"q_{datetime.now().timestamp()}_{image.filename}")
-            image.save(os.path.join(app.config['QUESTION_IMAGE_FOLDER'], image_filename))
-            question.image_file = image_filename
+            question.image_data = image.read()
+            question.image_mimetype = image.mimetype
+            question.image_file = image.filename
             
         db.session.commit()
         flash('Question updated!')
@@ -402,6 +562,7 @@ def update_classroom():
         classroom.is_live = is_live
         classroom.detected_title = title
         classroom.updated_at = get_now_ist()
+        
         db.session.commit()
     
     flash('Classroom updated')
@@ -436,7 +597,7 @@ def add_meet_link():
 @login_required
 def toggle_meet_link(link_id):
     if current_user.role == 'admin':
-        link = MeetLink.query.get(link_id)
+        link = db.session.get(MeetLink, link_id)
         if link:
             link.is_active = not link.is_active
             db.session.commit()
@@ -507,6 +668,8 @@ def start_attempt():
     if not existing:
         new_attempt = Attempt(student_id=current_user.id, question_id=question_id)
         db.session.add(new_attempt)
+        # Log attempt event
+        db.session.add(ActivityLog(user_id=current_user.id, action="ATTEMPT_START", details=f"Started question {question_id}"))
         db.session.commit()
         return jsonify({'start_time': new_attempt.start_time.timestamp() * 1000})
     return jsonify({'start_time': existing.start_time.timestamp() * 1000})
@@ -532,21 +695,29 @@ def submit_answer():
                     is_correct=False, is_expired=True
                 )
                 db.session.add(new_ans)
+                # Log late submission
+                db.session.add(ActivityLog(user_id=current_user.id, action="LATE_SUBMISSION", details=f"Late attempt for question {question_id}"))
                 db.session.commit()
                 return redirect(url_for('student_dashboard'))
 
-    filename = None
+    file_data = None
+    file_mimetype = None
+    file_name = None
     if file and allowed_file(file.filename):
-        filename = secure_filename(f"{current_user.username}_{datetime.now().timestamp()}_{file.filename}")
-        file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
+        file_data = file.read()
+        file_mimetype = file.mimetype
+        file_name = file.filename
     
     is_correct = (selected_option == question.correct_answer) if selected_option else None
     new_ans = Answer(
         student_id=current_user.id, question_id=question_id, 
-        selected_option=selected_option, file_path=filename, 
+        selected_option=selected_option, file_path=file_name,
+        file_data=file_data, file_mimetype=file_mimetype, file_name=file_name,
         is_correct=is_correct
     )
     db.session.add(new_ans)
+    # Log submission event
+    db.session.add(ActivityLog(user_id=current_user.id, action="SUBMISSION", details=f"Answered Q{question_id} ({'PASS' if is_correct else 'FAIL'})"))
 
     # 🔔 Notify admin
     notif = Notification(
@@ -600,8 +771,8 @@ def export_submissions():
     writer = csv.writer(output)
     writer.writerow(['Student Name', 'Username', 'Question', 'Result', 'Submitted At'])
     for ans in answers:
-        student = User.query.get(ans.student_id)
-        question = Question.query.get(ans.question_id)
+        student = db.session.get(User, ans.student_id)
+        question = db.session.get(Question, ans.question_id)
         writer.writerow([
             student.full_name if student else 'Deleted User',
             student.username if student else 'N/A',
@@ -645,6 +816,32 @@ def export_members():
 @login_required
 def download_file(filename):
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route('/media/profile_pics/<int:user_id>/<filename>')
+def serve_profile_pic(user_id, filename):
+    """Serve profile pictures from the database."""
+    user = db.session.get(User, user_id)
+    if user and user.profile_image_data:
+        return send_file(BytesIO(user.profile_image_data), mimetype=user.profile_image_mimetype)
+    return send_from_directory(app.config['PROFILE_IMAGE_FOLDER'], 'default.jpg')
+
+@app.route('/media/question_images/<int:question_id>')
+def serve_question_image(question_id):
+    """Serve question images from the database."""
+    q = db.session.get(Question, question_id)
+    if q and q.image_data:
+        return send_file(BytesIO(q.image_data), mimetype=q.image_mimetype)
+    return '', 404
+
+@app.route('/media/submissions/<int:answer_id>')
+@login_required
+def serve_submission_file(answer_id):
+    """Serve student submission files from the database."""
+    ans = db.session.get(Answer, answer_id)
+    if not ans or not ans.file_data: return '', 404
+    if current_user.role != 'admin' and current_user.id != ans.student_id:
+        return '', 403
+    return send_file(BytesIO(ans.file_data), mimetype=ans.file_mimetype, as_attachment=True, download_name=ans.file_name)
 
 if __name__ == '__main__':
     from waitress import serve

@@ -1,0 +1,170 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="hero-header animate-fade-in">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; position: relative; z-index: 1;">
+        <div>
+            <h1 style="font-size: 2.8rem; font-weight: 800; margin-bottom: 0.75rem; letter-spacing: -1.5px;">
+                Student <span class="text-gradient">Registry & Profiles</span>
+            </h1>
+            <p style="color: var(--text-dim); font-size: 1.1rem; max-width: 600px;">
+                Complete oversight of your student community. Monitor performance, manage accounts, and track individual
+                growth.
+            </p>
+        </div>
+        <div style="text-align: right; display: flex; gap: 1rem;">
+            <div class="card glass-panel"
+                style="padding: 0.75rem 1.5rem; margin: 0; display: flex; align-items: center; gap: 10px;">
+                <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">{{ all_users|length }}</div>
+                <div style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase;">Total Students</div>
+            </div>
+            <a href="{{ url_for('export_members') }}" class="btn btn-primary" style="padding: 1rem 1.5rem;">
+                <svg style="width:20px;height:20px" viewBox="0 0 24 24">
+                    <path fill="currentColor"
+                        d="M14,2L20,8V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V4A2,2 0 0,1 6,2H14M18,20V9H13V4H6V20H18M12,19L8,15H10.5V12H13.5V15H16L12,19Z" />
+                </svg>
+                Export CSV
+            </a>
+        </div>
+    </div>
+</div>
+
+<!-- Search & Filter Bar -->
+<div class="card glass-panel animate-fade-in"
+    style="margin-bottom: 2rem; padding: 1.25rem; display: flex; gap: 1.5rem; align-items: center;">
+    <div style="flex: 1; position: relative;">
+        <svg style="width:20px; height:20px; position: absolute; left: 1rem; top: 50%; transform: translateY(-50%); color: var(--text-dim);"
+            viewBox="0 0 24 24">
+            <path fill="currentColor"
+                d="M9.5,3A6.5,6.5 0 0,1 16,9.5C16,11.11 15.41,12.59 14.44,13.73L14.71,14H15.5L20.5,19L19,20.5L14,15.5V14.71L13.73,14.44C12.59,15.41 11.11,16 9.5,16A6.5,6.5 0 0,1 3,9.5A6.5,6.5 0 0,1 9.5,3M9.5,5C7,5 5,7 5,9.5C5,12 7,14 9.5,14C12,14 14,12 14,9.5C14,7 12,5 9.5,5Z" />
+        </svg>
+        <input type="text" id="studentSearch" placeholder="Search by name or username..."
+            style="width: 100%; padding: 0.8rem 1rem 0.8rem 3rem; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main);">
+    </div>
+    <div style="display: flex; gap: 0.75rem; align-items: center;">
+        <span style="font-size: 0.85rem; color: var(--text-dim); font-weight: 600;">Sort By:</span>
+        <select id="studentSort"
+            style="padding: 0.8rem 1rem; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); border-radius: 12px; color: var(--text-main);">
+            <option value="newest">Newest First</option>
+            <option value="oldest">Oldest First</option>
+            <option value="name">Alphabetical</option>
+            <option value="submissions">Highest Activity</option>
+        </select>
+    </div>
+</div>
+
+<div id="studentGrid"
+    style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.5rem; margin-bottom: 3rem;">
+    {% for student in all_users %}
+    <div class="card glass-panel profile-card animate-fade-in"
+        style="padding: 1.5rem; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;"
+        onclick="window.location.href='{{ url_for('admin_view_user', user_id=student.id) }}'"
+        data-name="{{ student.full_name|lower }}" data-username="{{ student.username|lower }}"
+        data-submissions="{{ student.answers|length }}" data-timestamp="{{ student.created_at.timestamp() }}">
+        <div style="display: flex; align-items: center; gap: 1.25rem;">
+            <div
+                style="width: 70px; height: 70px; border-radius: 50%; overflow: hidden; border: 3px solid var(--primary); background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center;">
+                {% if student.profile_image %}
+                <img src="{{ url_for('serve_profile_pic', user_id=student.id, filename=student.profile_image) }}"
+                    style="width: 100%; height: 100%; object-fit: cover;">
+                {% else %}
+                <span style="font-size: 1.8rem; font-weight: 800; color: var(--primary);">{{
+                    student.full_name[:1].upper() if student.full_name else '?' }}</span>
+                {% endif %}
+            </div>
+            <div>
+                <h3 style="font-size: 1.2rem; font-weight: 700; color: var(--text-main); margin-bottom: 2px;">{{
+                    student.full_name or 'Anonymous' }}</h3>
+                <div style="font-size: 0.8rem; color: var(--text-dim); display: flex; align-items: center; gap: 5px;">
+                    <svg style="width:14px;height:14px" viewBox="0 0 24 24">
+                        <path fill="currentColor"
+                            d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+                    </svg>
+                    @{{ student.username }}
+                </div>
+            </div>
+        </div>
+
+        <div
+            style="margin-top: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--glass-border);">
+            <div style="text-align: center;">
+                <div style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase;">Submissions</div>
+                <div style="font-weight: 700; color: var(--text-main);">{{ student.answers|length }}</div>
+            </div>
+            <div style="text-align: center;">
+                <div style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase;">Member Since</div>
+                <div style="font-weight: 700; color: var(--text-main);">{{ student.created_at.strftime('%b %y') }}</div>
+            </div>
+        </div>
+
+        <div style="margin-top: 1rem;">
+            <a href="{{ url_for('admin_view_user', user_id=student.id) }}" class="btn"
+                style="width: 100%; text-align: center; background: rgba(255,255,255,0.03); color: var(--primary); font-size: 0.85rem; font-weight: 600;">
+                View Full Profile →
+            </a>
+        </div>
+    </div>
+    {% else %}
+    <div id="noResults" style="grid-column: 1/-1; padding: 5rem; text-align: center; display: none;">
+        <div style="font-size: 1.2rem; color: var(--text-dim);">No students found matching your criteria.</div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const searchInput = document.getElementById('studentSearch');
+        const sortSelect = document.getElementById('studentSort');
+        const studentGrid = document.getElementById('studentGrid');
+        const noResults = document.getElementById('noResults');
+        const cards = Array.from(studentGrid.getElementsByClassName('profile-card'));
+
+        function updateGrid() {
+            const query = searchInput.value.toLowerCase();
+            const sortBy = sortSelect.value;
+
+            let visibleCards = cards.filter(card => {
+                const name = card.dataset.name;
+                const username = card.dataset.username;
+                const matches = name.includes(query) || username.includes(query);
+                card.style.display = matches ? 'block' : 'none';
+                return matches;
+            });
+
+            if (visibleCards.length === 0 && query !== '') {
+                noResults.style.display = 'block';
+            } else {
+                noResults.style.display = 'none';
+            }
+
+            visibleCards.sort((a, b) => {
+                if (sortBy === 'name') return a.dataset.name.localeCompare(b.dataset.name);
+                if (sortBy === 'newest') return b.dataset.timestamp - a.dataset.timestamp;
+                if (sortBy === 'oldest') return a.dataset.timestamp - b.dataset.timestamp;
+                if (sortBy === 'submissions') return b.dataset.submissions - a.dataset.submissions;
+                return 0;
+            });
+
+            visibleCards.forEach(card => studentGrid.appendChild(card));
+        }
+
+        searchInput.addEventListener('input', updateGrid);
+        sortSelect.addEventListener('change', updateGrid);
+    });
+</script>
+
+<style>
+    .profile-card:hover {
+        transform: translateY(-8px);
+        background: rgba(255, 255, 255, 0.05);
+        border-color: var(--primary);
+    }
+
+    .text-gradient {
+        background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+</style>
+{% endblock %}

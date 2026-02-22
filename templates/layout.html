@@ -254,6 +254,21 @@
             <a href="{{ url_for('admin_dashboard') }}">Admin Dashboard</a>
             {% else %}
             <a href="{{ url_for('student_dashboard') }}">Student Hub</a>
+            <a href="{{ url_for('student_profile') }}" style="display: flex; align-items: center; gap: 8px;">
+                <div
+                    style="width: 28px; height: 28px; border-radius: 50%; overflow: hidden; background: rgba(255,255,255,0.1); border: 1px solid var(--primary); display: flex; align-items: center; justify-content: center;">
+                    {% if current_user.profile_image %}
+                    <img src="{{ url_for('serve_profile_pic', user_id=current_user.id, filename=current_user.profile_image) }}"
+                        style="width: 100%; height: 100%; object-fit: cover;">
+                    {% else %}
+                    <svg style="width: 16px; height: 16px;" viewBox="0 0 24 24">
+                        <path fill="currentColor"
+                            d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+                    </svg>
+                    {% endif %}
+                </div>
+                My Profile
+            </a>
             {% endif %}
             <a href="{{ url_for('logout') }}">Logout</a>
             {% else %}

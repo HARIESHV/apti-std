@@ -1,0 +1,120 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="hero-header animate-fade-in">
+    <div style="display: flex; justify-content: space-between; align-items: flex-end; position: relative; z-index: 1;">
+        <div>
+            <h1 style="font-size: 2.8rem; font-weight: 800; margin-bottom: 0.75rem; letter-spacing: -1.5px;">
+                Your <span class="text-gradient">Profile</span>
+            </h1>
+            <p style="color: var(--text-dim); font-size: 1.1rem; max-width: 600px;">Manage your personal information and
+                account security.</p>
+        </div>
+        <div style="text-align: right;">
+            <div
+                style="padding: 1rem 2rem; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid var(--glass-border);">
+                <div style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px;">
+                    Member Since</div>
+                <div style="font-weight: 700; color: var(--text-main);">{{ user.created_at.strftime('%B %Y') }}</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div style="max-width: 800px; margin: 0 auto;">
+    <div class="card glass-panel" style="padding: 2.5rem; border-left: 5px solid var(--primary);">
+        <form action="{{ url_for('student_profile') }}" method="POST" enctype="multipart/form-data"
+            style="display: grid; gap: 2rem;">
+
+            <!-- WhatsApp Style Avatar Upload -->
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                <div style="position: relative; width: 120px; height: 120px;">
+                    <div id="image-preview"
+                        style="width: 100%; height: 100%; border-radius: 50%; overflow: hidden; border: 4px solid var(--primary); background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center;">
+                        {% if user.profile_image %}
+                        <img src="{{ url_for('serve_profile_pic', user_id=user.id, filename=user.profile_image) }}"
+                            style="width: 100%; height: 100%; object-fit: cover;">
+                        {% else %}
+                        <svg style="width: 60px; height: 60px; color: var(--text-dim);" viewBox="0 0 24 24">
+                            <path fill="currentColor"
+                                d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+                        </svg>
+                        {% endif %}
+                    </div>
+                    <label for="profile_image"
+                        style="position: absolute; bottom: 0; right: 0; background: var(--primary); color: white; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; border: 3px solid #07090e; transition: all 0.2s;">
+                        <svg style="width:20px; height:20px" viewBox="0 0 24 24">
+                            <path fill="currentColor"
+                                d="M4,4H7L9,2H15L17,4H20A2,2 0 0,1 22,6V18A2,2 0 0,1 20,20H4A2,2 0 0,1 2,18V6A2,2 0 0,1 4,4M12,7A5,5 0 0,0 7,12A5,5 0 0,0 12,17A5,5 0 0,0 17,12A5,5 0 0,0 12,7M12,9A3,3 0 0,1 15,12A3,3 0 0,1 12,15A3,3 0 0,1 9,12A3,3 0 0,1 12,9Z" />
+                        </svg>
+                    </label>
+                    <input type="file" name="profile_image" id="profile_image" hidden accept="image/*"
+                        onchange="previewImage(this)">
+                </div>
+                <div style="text-align: center;">
+                    <div style="font-weight: 700; color: var(--text-main);">Profile Picture</div>
+                    <div style="font-size: 0.8rem; color: var(--text-dim);">Tap the camera to update</div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.75rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 600;">Full
+                        Name</label>
+                    <input type="text" name="full_name" value="{{ user.full_name }}" required
+                        placeholder="Your Full Name">
+                </div>
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.75rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 600;">Username</label>
+                    <input type="text" value="{{ user.username }}" disabled
+                        style="background: rgba(255,255,255,0.03); color: var(--text-dim); cursor: not-allowed;">
+                    <p style="font-size: 0.7rem; color: var(--text-dim); margin-top: 5px;">Username cannot be changed.
+                    </p>
+                </div>
+            </div>
+
+            <div style="border-top: 1px solid var(--glass-border); padding-top: 2rem;">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; color: var(--text-main);">
+                    Security</h3>
+                <div>
+                    <label
+                        style="display: block; margin-bottom: 0.75rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 600;">New
+                        Password</label>
+                    <input type="password" name="password" placeholder="Leave blank to keep current password">
+                    <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 8px;">
+                        <svg style="width:14px; height:14px; vertical-align: text-bottom; margin-right: 4px;"
+                            viewBox="0 0 24 24">
+                            <path fill="currentColor"
+                                d="M12,2A10,10 0 1,0 22,12A10,10 0 0,0 12,2M12,17A1,1 0 1,1 11,16A1,1 0 0,1 12,17M13,14H11V7H13V14Z" />
+                        </svg>
+                        Ensure your password is strong and unique.
+                    </p>
+                </div>
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 1rem; margin-top: 1rem;">
+                <a href="{{ url_for('student_dashboard') }}" class="btn"
+                    style="background: rgba(255,255,255,0.05); color: var(--text-dim);">Cancel</a>
+                <button type="submit" class="btn btn-primary" style="padding: 0.75rem 2rem;">Save Changes</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    function previewImage(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = function (e) {
+                const preview = document.getElementById('image-preview');
+                preview.innerHTML = `<img src="${e.target.result}" style="width: 100%; height: 100%; object-fit: cover;">`;
+            }
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+</script>
+{% endblock %}
