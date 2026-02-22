@@ -343,17 +343,36 @@
 
                     let html = '';
                     data.notifications.forEach(n => {
+                        let header = `<strong style="color: var(--text-main); font-size: 0.85rem;">${n.student_name}</strong>`;
+                        let body = '';
+                        let footer = '';
+                        let color = 'var(--primary)';
+
+                        if (n.type === 'login') {
+                            body = `<span style="color: var(--primary);">Just logged in</span>`;
+                            footer = 'Online Now';
+                            color = 'var(--primary)';
+                        } else if (n.type === 'register') {
+                            body = `<span style="color: var(--accent);">Joined the platform!</span>`;
+                            footer = 'New Member';
+                            color = 'var(--accent)';
+                        } else {
+                            body = `Finished: <span style="color: var(--primary);">${n.question_text}</span>`;
+                            footer = n.is_correct ? 'CORRECT ✓' : 'INCORRECT ✗';
+                            color = n.is_correct ? 'var(--accent)' : 'var(--danger)';
+                        }
+
                         html += `
-                            <div class="notification-item">
+                            <div class="notification-item" onclick="window.location.href='/admin/user/${n.student_id}'" style="cursor: pointer;">
                                 <div style="display: flex; justify-content: space-between; align-items: start;">
-                                    <strong style="color: var(--text-main); font-size: 0.85rem;">${n.student_name}</strong>
+                                    ${header}
                                     <span style="font-size: 0.7rem; color: var(--text-dim);">${n.created_at}</span>
                                 </div>
                                 <div style="font-size: 0.8rem; color: var(--text-dim); line-height: 1.4;">
-                                    Finished: <span style="color: var(--primary);">${n.question_text}</span>
+                                    ${body}
                                 </div>
-                                <div style="font-size: 0.75rem; font-weight: 700; color: ${n.is_correct ? 'var(--accent)' : 'var(--danger)'}">
-                                    ${n.is_correct ? 'CORRECT ✓' : 'INCORRECT ✗'}
+                                <div style="font-size: 0.75rem; font-weight: 700; color: ${color}">
+                                    ${footer}
                                 </div>
                             </div>
                         `;

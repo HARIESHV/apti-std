@@ -193,6 +193,11 @@ def init_db():
                 except: pass
                 try: conn.execute(db.text("ALTER TABLE answer ADD COLUMN file_name VARCHAR(100)"))
                 except: pass
+                
+                # Notification table
+                try: conn.execute(db.text("ALTER TABLE notification ADD COLUMN type VARCHAR(50)"))
+                except: pass
+                
                 conn.commit()
         except:
             pass
@@ -247,6 +252,17 @@ def login():
             
             # Log login event
             db.session.add(ActivityLog(user_id=user.id, action="LOGIN", details=f"User {user.username} logged in"))
+            
+            # Notify admin of login if it's a student
+            if user.role == 'student':
+                notif = Notification(
+                    type='login',
+                    student_id=user.id,
+                    student_name=user.full_name or user.username,
+                    read=False
+                )
+                db.session.add(notif)
+            
             db.session.commit()
             
             resp = make_response(redirect(url_for('index')))
@@ -300,6 +316,16 @@ def register():
         
         # Log registration event
         db.session.add(ActivityLog(user_id=new_user.id, action="REGISTER", details=f"New user registered: {new_user.username}"))
+        
+        # Notify admin of registration
+        notif = Notification(
+            type='register',
+            student_id=new_user.id,
+            student_name=new_user.full_name or new_user.username,
+            read=False
+        )
+        db.session.add(notif)
+        
         db.session.commit()
         
         login_user(new_user)
@@ -749,6 +775,8 @@ def get_notifications():
     for n in notifs:
         result.append({
             'id': n.id,
+            'type': n.type or 'submission',
+            'student_id': n.student_id,
             'student_name': n.student_name,
             'question_text': n.question_text,
             'is_correct': n.is_correct,
