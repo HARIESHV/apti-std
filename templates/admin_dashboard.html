@@ -191,6 +191,29 @@
     </div>
 </div>
 
+<!-- Platform Overview Stats -->
+<div
+    style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">
+    <div class="card glass-panel" style="padding: 1.5rem; border-left: 4px solid var(--accent); margin: 0;">
+        <div
+            style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 5px; font-weight: 800;">
+            Platform Correct Solves</div>
+        <div style="font-size: 2rem; font-weight: 800; color: var(--accent);">{{ platform_stats.total_solved }}</div>
+    </div>
+    <div class="card glass-panel" style="padding: 1.5rem; border-left: 4px solid var(--primary); margin: 0;">
+        <div
+            style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 5px; font-weight: 800;">
+            Total Student Attempts</div>
+        <div style="font-size: 2rem; font-weight: 800; color: var(--primary);">{{ platform_stats.total_attempts }}</div>
+    </div>
+    <div class="card glass-panel" style="padding: 1.5rem; border-left: 4px solid var(--secondary); margin: 0;">
+        <div
+            style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 5px; font-weight: 800;">
+            Active Students</div>
+        <div style="font-size: 2rem; font-weight: 800; color: var(--secondary);">{{ all_users|length }}</div>
+    </div>
+</div>
+
 <!-- Dashboards Quick Access (Moved to Downside) -->
 <div
     style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem;">

@@ -61,6 +61,14 @@ class User(UserMixin, db.Model):
     answers = db.relationship('Answer', backref='student', lazy=True)
     attempts = db.relationship('Attempt', backref='student', lazy=True)
 
+    @property
+    def solved_count(self):
+        return sum(1 for a in self.answers if a.is_correct)
+
+    @property
+    def total_attempted(self):
+        return len(self.answers)
+
 class Question(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     text = db.Column(db.Text, nullable=False)
@@ -414,6 +422,12 @@ def admin_dashboard():
     meet_links = MeetLink.query.order_by(MeetLink.created_at.desc()).all()
     activity_logs = ActivityLog.query.order_by(ActivityLog.event_time.desc()).limit(10).all()
 
+    # Platform stats
+    platform_stats = {
+        'total_solved': Answer.query.filter_by(is_correct=True).count(),
+        'total_attempts': Answer.query.count()
+    }
+
     return render_template('admin_dashboard.html', 
                          questions=questions, 
                          members=all_users[:8], 
@@ -421,7 +435,8 @@ def admin_dashboard():
                          classroom=classroom,
                          meet_links=meet_links,
                          activity_logs=activity_logs,
-                         all_users=all_users)
+                         all_users=all_users,
+                         platform_stats=platform_stats)
 
 @app.route('/admin/activity')
 @login_required

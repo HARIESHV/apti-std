@@ -37,6 +37,7 @@
                     style="background: rgba(255,255,255,0.02); color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">
                     <th style="padding: 1.5rem;">Principal Info</th>
                     <th style="padding: 1.5rem;">Username</th>
+                    <th style="padding: 1.5rem;">Solved</th>
                     <th style="padding: 1.5rem;">Designation</th>
                     <th style="padding: 1.5rem;">Registration Date</th>
                 </tr>
@@ -70,6 +71,12 @@
                     </td>
                     <td style="padding: 1.5rem; color: var(--text-dim); font-family: monospace;">
                         @{{ user.username }}
+                    </td>
+                    <td style="padding: 1.5rem;">
+                        <span
+                            style="font-weight: 800; color: var(--accent); background: rgba(16, 185, 129, 0.1); padding: 4px 10px; border-radius: 8px; font-size: 0.9rem;">
+                            {{ user.solved_count }}
+                        </span>
                     </td>
                     <td style="padding: 1.5rem;">
                         <span

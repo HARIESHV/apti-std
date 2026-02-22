@@ -58,7 +58,7 @@
     {% for student in all_users %}
     <div class="card glass-panel profile-card animate-fade-in"
         style="padding: 1.5rem; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;"
-        onclick="window.location.href='{{ url_for('admin_view_user', user_id=student.id) }}'"
+        onclick="window.location.href='{{ url_for('admin_view_user', user_id=student.id) }}';"
         data-name="{{ student.full_name|lower }}" data-username="{{ student.username|lower }}"
         data-submissions="{{ student.answers|length }}" data-timestamp="{{ student.created_at.timestamp() }}">
         <div style="display: flex; align-items: center; gap: 1.25rem;">
@@ -88,8 +88,9 @@
         <div
             style="margin-top: 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding-top: 1rem; border-top: 1px solid var(--glass-border);">
             <div style="text-align: center;">
-                <div style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase;">Submissions</div>
-                <div style="font-weight: 700; color: var(--text-main);">{{ student.answers|length }}</div>
+                <div style="font-size: 0.7rem; color: var(--accent); text-transform: uppercase; font-weight: 800;">
+                    Solved</div>
+                <div style="font-weight: 800; color: var(--text-main);">{{ student.solved_count }}</div>
             </div>
             <div style="text-align: center;">
                 <div style="font-size: 0.7rem; color: var(--text-dim); text-transform: uppercase;">Member Since</div>

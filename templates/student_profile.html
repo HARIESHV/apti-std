@@ -10,7 +10,14 @@
             <p style="color: var(--text-dim); font-size: 1.1rem; max-width: 600px;">Manage your personal information and
                 account security.</p>
         </div>
-        <div style="text-align: right;">
+        <div style="text-align: right; display: flex; gap: 1rem;">
+            <div
+                style="padding: 1rem 2rem; background: rgba(16, 185, 129, 0.1); border-radius: 12px; border: 1px solid rgba(16, 185, 129, 0.2);">
+                <div
+                    style="font-size: 0.8rem; color: var(--accent); text-transform: uppercase; margin-bottom: 4px; font-weight: 800;">
+                    Solved Problems</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: var(--text-main);">{{ user.solved_count }}</div>
+            </div>
             <div
                 style="padding: 1rem 2rem; background: rgba(255,255,255,0.05); border-radius: 12px; border: 1px solid var(--glass-border);">
                 <div style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; margin-bottom: 4px;">
