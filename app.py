@@ -305,7 +305,7 @@ def login():
         user = User.query.filter_by(username=username).first()
         
         if user and check_password_hash(user.password, password):
-            login_user(user)
+            login_user(user, remember=True)
             
             # Log login event
             db.session.add(ActivityLog(user_id=user.id, action="LOGIN", details=f"User {user.username} logged in"))
@@ -393,7 +393,7 @@ def register():
         
         db.session.commit()
         
-        login_user(new_user)
+        login_user(new_user, remember=True)
         flash('Account created!')
         resp = make_response(redirect(url_for('student_dashboard')))
         resp.set_cookie('returning_user', 'true', max_age=315360000) # 10 years
