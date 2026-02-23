@@ -99,6 +99,8 @@
             <option value="newest">Newest First</option>
             <option value="oldest">Oldest First</option>
             <option value="name">Alphabetical</option>
+            <option value="solved">Highest Solved</option>
+            <option value="accuracy">Best Accuracy</option>
             <option value="submissions">Highest Activity</option>
         </select>
     </div>
@@ -111,15 +113,31 @@
         style="padding: 1.5rem; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;"
         onclick="window.location.href='{{ url_for('admin_view_user', user_id=student.id) }}'"
         data-name="{{ student.full_name|lower }}" data-username="{{ student.username|lower }}"
-        data-submissions="{{ student.answers|length }}" data-timestamp="{{ student.created_at.timestamp() }}"
+        data-submissions="{{ student.answers|length }}" data-solved="{{ student.solved_count }}"
+        data-accuracy="{{ student.accuracy }}" data-timestamp="{{ student.created_at.timestamp() }}"
         data-date="{% if student.created_at >= reg_stats.today_start %}today{% elif student.created_at >= reg_stats.yesterday_start %}yesterday{% endif %}"
         data-full-date="{{ student.created_at.strftime('%Y %B %b %d').lower() }}">
 
-        {% if student.created_at >= reg_stats.today_start %}
         <div
-            style="position: absolute; top: 1rem; right: 1rem; background: var(--primary); color: white; font-size: 0.65rem; font-weight: 900; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.5px; animation: pulse-soft 2s infinite;">
-            NEW MEMBER</div>
-        {% endif %}
+            style="position: absolute; top: 1rem; right: 1rem; display: flex; flex-direction: column; gap: 4px; align-items: flex-end;">
+            {% if student.created_at >= reg_stats.today_start %}
+            <div
+                style="background: var(--primary); color: white; font-size: 0.6rem; font-weight: 900; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.5px; animation: pulse-soft 2s infinite; white-space: nowrap;">
+                NEW MEMBER</div>
+            {% endif %}
+
+            {% if student.solved_count >= 10 %}
+            <div
+                style="background: var(--accent); color: white; font-size: 0.6rem; font-weight: 900; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.5px; white-space: nowrap;">
+                TOP SOLVER</div>
+            {% endif %}
+
+            {% if student.accuracy >= 80 and student.total_attempted >= 5 %}
+            <div
+                style="background: #f59e0b; color: white; font-size: 0.6rem; font-weight: 900; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.5px; white-space: nowrap;">
+                HIGH ACCURACY</div>
+            {% endif %}
+        </div>
 
         <div style="display: flex; align-items: center; gap: 1.25rem;">
             <div
@@ -219,6 +237,8 @@
                 if (sortBy === 'newest') return b.dataset.timestamp - a.dataset.timestamp;
                 if (sortBy === 'oldest') return a.dataset.timestamp - b.dataset.timestamp;
                 if (sortBy === 'submissions') return b.dataset.submissions - a.dataset.submissions;
+                if (sortBy === 'solved') return b.dataset.solved - a.dataset.solved;
+                if (sortBy === 'accuracy') return b.dataset.accuracy - a.dataset.accuracy;
                 return 0;
             });
 
