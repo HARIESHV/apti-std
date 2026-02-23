@@ -310,6 +310,95 @@
         let lastNotifCount = 0;
         let isFirstLoad = true;
 
+        // ═══════ NOTIFICATION SOUND SYSTEM ═══════
+        let audioCtx = null;
+        let soundEnabled = localStorage.getItem('notif_sound') !== 'off'; // default ON
+
+        // Create sound toggle button and insert it next to the bell
+        const soundToggle = document.createElement('div');
+        soundToggle.id = 'sound-toggle';
+        soundToggle.title = soundEnabled ? 'Sound ON — Click to mute' : 'Sound OFF — Click to unmute';
+        soundToggle.style.cssText = 'cursor: pointer; display: flex; align-items: center; padding: 4px; border-radius: 6px; transition: all 0.2s; margin-left: 4px;';
+        soundToggle.innerHTML = soundEnabled
+            ? '<svg style="width:18px;height:18px;color:var(--accent);" viewBox="0 0 24 24"><path fill="currentColor" d="M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.84 14,18.7V20.77C18,19.86 21,16.28 21,12C21,7.72 18,4.14 14,3.23M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16C15.5,15.29 16.5,13.76 16.5,12M3,9V15H7L12,20V4L7,9H3Z"/></svg>'
+            : '<svg style="width:18px;height:18px;color:var(--text-dim);" viewBox="0 0 24 24"><path fill="currentColor" d="M12,4L9.91,6.09L12,8.18M4.27,3L3,4.27L7.73,9H3V15H7L12,20V13.27L16.25,17.53C15.58,18.04 14.83,18.45 14,18.7V20.77C15.38,20.45 16.63,19.82 17.68,18.96L19.73,21L21,19.73L12,10.73M19,12C19,12.94 18.8,13.82 18.46,14.64L19.97,16.15C20.62,14.91 21,13.5 21,12C21,7.72 18,4.14 14,3.23V5.29C16.89,6.15 19,8.83 19,12M16.5,12C16.5,10.23 15.5,8.71 14,7.97V10.18L16.45,12.63C16.5,12.43 16.5,12.21 16.5,12Z"/></svg>';
+        bell.parentNode.insertBefore(soundToggle, bell.nextSibling);
+
+        soundToggle.addEventListener('click', (e) => {
+            e.stopPropagation();
+            soundEnabled = !soundEnabled;
+            localStorage.setItem('notif_sound', soundEnabled ? 'on' : 'off');
+            soundToggle.title = soundEnabled ? 'Sound ON — Click to mute' : 'Sound OFF — Click to unmute';
+            soundToggle.innerHTML = soundEnabled
+                ? '<svg style="width:18px;height:18px;color:var(--accent);" viewBox="0 0 24 24"><path fill="currentColor" d="M14,3.23V5.29C16.89,6.15 19,8.83 19,12C19,15.17 16.89,17.84 14,18.7V20.77C18,19.86 21,16.28 21,12C21,7.72 18,4.14 14,3.23M16.5,12C16.5,10.23 15.5,8.71 14,7.97V16C15.5,15.29 16.5,13.76 16.5,12M3,9V15H7L12,20V4L7,9H3Z"/></svg>'
+                : '<svg style="width:18px;height:18px;color:var(--text-dim);" viewBox="0 0 24 24"><path fill="currentColor" d="M12,4L9.91,6.09L12,8.18M4.27,3L3,4.27L7.73,9H3V15H7L12,20V13.27L16.25,17.53C15.58,18.04 14.83,18.45 14,18.7V20.77C15.38,20.45 16.63,19.82 17.68,18.96L19.73,21L21,19.73L12,10.73M19,12C19,12.94 18.8,13.82 18.46,14.64L19.97,16.15C20.62,14.91 21,13.5 21,12C21,7.72 18,4.14 14,3.23V5.29C16.89,6.15 19,8.83 19,12M16.5,12C16.5,10.23 15.5,8.71 14,7.97V10.18L16.45,12.63C16.5,12.43 16.5,12.21 16.5,12Z"/></svg>';
+
+            // Play a quick test sound when enabling
+            if (soundEnabled) {
+                playNotifSound();
+            }
+        });
+
+        soundToggle.addEventListener('mouseover', () => {
+            soundToggle.style.background = 'rgba(255,255,255,0.05)';
+        });
+        soundToggle.addEventListener('mouseout', () => {
+            soundToggle.style.background = 'transparent';
+        });
+
+        // Generate notification chime using Web Audio API (no files needed)
+        function playNotifSound() {
+            if (!soundEnabled) return;
+            try {
+                if (!audioCtx) {
+                    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                }
+
+                const now = audioCtx.currentTime;
+
+                // First tone — C5 (523 Hz)
+                const osc1 = audioCtx.createOscillator();
+                const gain1 = audioCtx.createGain();
+                osc1.type = 'sine';
+                osc1.frequency.setValueAtTime(523.25, now);
+                gain1.gain.setValueAtTime(0.3, now);
+                gain1.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc1.connect(gain1);
+                gain1.connect(audioCtx.destination);
+                osc1.start(now);
+                osc1.stop(now + 0.3);
+
+                // Second tone — E5 (659 Hz) — slightly delayed
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                osc2.type = 'sine';
+                osc2.frequency.setValueAtTime(659.25, now + 0.12);
+                gain2.gain.setValueAtTime(0, now);
+                gain2.gain.setValueAtTime(0.25, now + 0.12);
+                gain2.gain.exponentialRampToValueAtTime(0.01, now + 0.45);
+                osc2.connect(gain2);
+                gain2.connect(audioCtx.destination);
+                osc2.start(now + 0.12);
+                osc2.stop(now + 0.45);
+
+                // Third tone — G5 (784 Hz) — final chime
+                const osc3 = audioCtx.createOscillator();
+                const gain3 = audioCtx.createGain();
+                osc3.type = 'sine';
+                osc3.frequency.setValueAtTime(783.99, now + 0.25);
+                gain3.gain.setValueAtTime(0, now);
+                gain3.gain.setValueAtTime(0.2, now + 0.25);
+                gain3.gain.exponentialRampToValueAtTime(0.01, now + 0.6);
+                osc3.connect(gain3);
+                gain3.connect(audioCtx.destination);
+                osc3.start(now + 0.25);
+                osc3.stop(now + 0.6);
+
+            } catch (err) {
+                console.warn('Could not play notification sound:', err);
+            }
+        }
+
         // Request notification permission
         if ("Notification" in window && Notification.permission === "default") {
             Notification.requestPermission();
@@ -329,29 +418,35 @@
                 const data = await res.json();
 
                 if (data.count > 0) {
-                    // Show desktop alert if count increased and not first load
-                    if (!isFirstLoad && data.count > lastNotifCount && "Notification" in window && Notification.permission === "granted") {
-                        const latest = data.notifications[0];
-                        let title = "AptitudePro Update";
-                        let body = "";
+                    // Show desktop alert + play sound if count increased and not first load
+                    if (!isFirstLoad && data.count > lastNotifCount) {
+                        // Play notification sound
+                        playNotifSound();
 
-                        if (latest.type === 'login') {
-                            title = "Student Login";
-                            body = `${latest.student_name} just logged in.`;
-                        } else if (latest.type === 'register') {
-                            title = "New Registration!";
-                            body = `${latest.student_name} joined the platform.`;
-                        } else {
-                            title = "New Submission";
-                            body = `${latest.student_name} answered a question.`;
+                        // Desktop notification
+                        if ("Notification" in window && Notification.permission === "granted") {
+                            const latest = data.notifications[0];
+                            let title = "AptitudePro Update";
+                            let body = "";
+
+                            if (latest.type === 'login') {
+                                title = "Student Login";
+                                body = `${latest.student_name} just logged in.`;
+                            } else if (latest.type === 'register') {
+                                title = "New Registration!";
+                                body = `${latest.student_name} joined the platform.`;
+                            } else {
+                                title = "New Submission";
+                                body = `${latest.student_name} answered a question.`;
+                            }
+
+                            new Notification(title, {
+                                body: body,
+                                icon: "/static/favicon.ico",
+                                silent: true, // We handle sound ourselves
+                                tag: 'aptipro-notif'
+                            });
                         }
-
-                        new Notification(title, {
-                            body: body,
-                            icon: "/static/favicon.ico",
-                            silent: false,
-                            tag: 'aptipro-notif' // Prevents duplicate spam
-                        });
                     }
 
                     lastNotifCount = data.count;
