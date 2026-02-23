@@ -532,11 +532,16 @@ def admin_questions_dashboard():
 @login_required
 def admin_submissions_dashboard():
     if current_user.role != 'admin': return redirect(url_for('student_dashboard'))
-    submissions = Answer.query.order_by(Answer.submitted_at.desc()).all()
+    
+    page = request.args.get('page', 1, type=int)
+    per_page = 50
+    pagination = Answer.query.order_by(Answer.submitted_at.desc()).paginate(page=page, per_page=per_page)
+    submissions = pagination.items
+    
     results = []
     for s in submissions:
-        student = User.query.get(s.student_id)
-        question = Question.query.get(s.question_id)
+        student = db.session.get(User, s.student_id)
+        question = db.session.get(Question, s.question_id)
         results.append({
             'id': s.id,
             'student': student,
@@ -546,7 +551,7 @@ def admin_submissions_dashboard():
             'is_correct': s.is_correct,
             'file_path': s.file_path
         })
-    return render_template('admin_submissions.html', results=results)
+    return render_template('admin_submissions.html', results=results, pagination=pagination)
 
 @app.route('/admin/members')
 @login_required
@@ -559,22 +564,26 @@ def admin_members_dashboard():
     yesterday_start = today_start - timedelta(days=1)
     tomorrow_start = today_start + timedelta(days=1)
     
-    members = User.query.filter_by(role='student').order_by(User.created_at.desc()).all()
+    page = request.args.get('page', 1, type=int)
+    per_page = 15
+    pagination = User.query.filter_by(role='student').order_by(User.created_at.desc()).paginate(page=page, per_page=per_page)
+    members = pagination.items
     
-    # Registration counts
+    # Registration counts (keep these global as they are small)
     today_reg = User.query.filter(User.role == 'student', User.created_at >= today_start, User.created_at < tomorrow_start).count()
     yesterday_reg = User.query.filter(User.role == 'student', User.created_at >= yesterday_start, User.created_at < today_start).count()
-    tomorrow_reg = 0 # Future registrations are usually 0, but added for completeness
+    total_reg = User.query.filter_by(role='student').count()
     
     reg_stats = {
         'today': today_reg,
         'yesterday': yesterday_reg,
-        'tomorrow': tomorrow_reg,
+        'tomorrow': 0,
+        'total': total_reg,
         'today_start': today_start,
         'yesterday_start': yesterday_start
     }
     
-    return render_template('admin_students.html', all_users=members, reg_stats=reg_stats)
+    return render_template('admin_students.html', all_users=members, reg_stats=reg_stats, pagination=pagination)
 
 @app.route('/admin/post_question', methods=['GET', 'POST'])
 @login_required
