@@ -15,7 +15,7 @@
         <div style="text-align: right; display: flex; gap: 1rem;">
             <div class="card glass-panel"
                 style="padding: 0.75rem 1.5rem; margin: 0; display: flex; align-items: center; gap: 10px;">
-                <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">{{ all_users|length }}</div>
+                <div style="font-size: 1.5rem; font-weight: 800; color: var(--primary);">{{ reg_stats.total }}</div>
                 <div style="font-size: 0.75rem; color: var(--text-dim); text-transform: uppercase;">Total Students</div>
             </div>
             <a href="{{ url_for('export_members') }}" class="btn btn-primary" style="padding: 1rem 1.5rem;">
@@ -70,7 +70,7 @@
             style="font-size: 0.75rem; color: var(--accent); text-transform: uppercase; font-weight: 800; letter-spacing: 1px; margin-bottom: 8px;">
             Lifetime Total</div>
         <div style="display: flex; align-items: center; justify-content: space-between;">
-            <div style="font-size: 2rem; font-weight: 800; color: var(--accent);">{{ all_users|length }}</div>
+            <div style="font-size: 2rem; font-weight: 800; color: var(--accent);">{{ reg_stats.total }}</div>
             <div style="color: var(--accent);"><svg style="width:32px;height:32px" viewBox="0 0 24 24">
                     <path fill="currentColor"
                         d="M12,2A10,10 0 1,0 22,12A10,10 0 0,0 12,2M11,16.5L6.5,12L7.91,10.59L11,13.67L16.09,8.58L17.5,10L11,16.5Z" />
@@ -112,15 +112,16 @@
     <div class="card glass-panel profile-card animate-fade-in"
         style="padding: 1.5rem; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer;"
         onclick="window.location.href='{{ url_for('admin_view_user', user_id=student.id) }}'"
-        data-name="{{ student.full_name|lower }}" data-username="{{ student.username|lower }}"
-        data-submissions="{{ student.answers|length }}" data-solved="{{ student.solved_count }}"
-        data-accuracy="{{ student.accuracy }}" data-timestamp="{{ student.created_at.timestamp() }}"
-        data-date="{% if student.created_at >= reg_stats.today_start %}today{% elif student.created_at >= reg_stats.yesterday_start %}yesterday{% endif %}"
-        data-full-date="{{ student.created_at.strftime('%Y %B %b %d').lower() }}">
+        data-name="{{ student.full_name|lower if student.full_name else student.username|lower }}"
+        data-username="{{ student.username|lower }}" data-submissions="{{ student.answers|length }}"
+        data-solved="{{ student.solved_count }}" data-accuracy="{{ student.accuracy }}"
+        data-timestamp="{{ student.created_at.timestamp() if student.created_at else 0 }}"
+        data-date="{% if student.created_at %}{% if student.created_at >= reg_stats.today_start %}today{% elif student.created_at >= reg_stats.yesterday_start %}yesterday{% endif %}{% endif %}"
+        data-full-date="{{ student.created_at.strftime('%Y %B %b %d').lower() if student.created_at else '' }}">
 
         <div
             style="position: absolute; top: 1rem; right: 1rem; display: flex; flex-direction: column; gap: 4px; align-items: flex-end;">
-            {% if student.created_at >= reg_stats.today_start %}
+            {% if student.created_at and student.created_at >= reg_stats.today_start %}
             <div
                 style="background: var(--primary); color: white; font-size: 0.6rem; font-weight: 900; padding: 2px 8px; border-radius: 4px; letter-spacing: 0.5px; animation: pulse-soft 2s infinite; white-space: nowrap;">
                 NEW MEMBER</div>

@@ -61,12 +61,12 @@
                                 </svg>
                                 {% endif %}
                             </div>
-                            <a href="{{ url_for('admin_view_user', user_id=r.student.id) }}"
+                            <a href="{{ url_for('admin_view_user', user_id=r.student.id) if r.student else '#' }}"
                                 style="text-decoration: none;">
                                 <div style="font-weight: 600; color: var(--text-main); transition: color 0.2s;"
                                     onmouseover="this.style.color='var(--primary)'"
                                     onmouseout="this.style.color='var(--text-main)'">
-                                    {{ r.student.full_name }}
+                                    {{ r.student.full_name if r.student else 'Unknown Student' }}
                                 </div>
                             </a>
                         </div>
@@ -74,7 +74,7 @@
                     <td style="padding: 1.5rem; max-width: 350px;">
                         <div
                             style="font-size: 0.95rem; color: var(--text-main); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            {{ r.question.text }}
+                            {{ r.question.text if r.question else 'Deleted Question' }}
                         </div>
                     </td>
                     <td style="padding: 1.5rem;">
@@ -93,7 +93,7 @@
                         {% endif %}
                     </td>
                     <td style="padding: 1.5rem; font-size: 0.85rem; color: var(--text-dim);">
-                        {{ r.submitted_at.strftime('%b %d, %H:%M') }}
+                        {{ r.submitted_at.strftime('%b %d, %H:%M') if r.submitted_at else 'Legacy' }}
                     </td>
                 </tr>
                 {% endfor %}
