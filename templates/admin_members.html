@@ -37,7 +37,6 @@
                     style="background: rgba(255,255,255,0.02); color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">
                     <th style="padding: 1.5rem;">Principal Info</th>
                     <th style="padding: 1.5rem;">Username</th>
-                    <th style="padding: 1.5rem;">Security Token</th>
                     <th style="padding: 1.5rem;">Solved</th>
                     <th style="padding: 1.5rem;">Designation</th>
                     <th style="padding: 1.5rem;">Registration Date</th>
@@ -72,13 +71,6 @@
                     </td>
                     <td style="padding: 1.5rem; color: var(--text-dim); font-family: monospace;">
                         @{{ user.username }}
-                    </td>
-                    <td style="padding: 1.5rem;">
-                        <code
-                            style="font-size: 0.65rem; color: #ffc107; background: rgba(255,193,7,0.05); padding: 4px 8px; border-radius: 4px; border: 1px solid rgba(255,193,7,0.2); display: block; max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;"
-                            title="{{ user.password }}">
-                            {{ user.password }}
-                        </code>
                     </td>
                     <td style="padding: 1.5rem;">
                         <span
