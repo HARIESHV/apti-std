@@ -86,12 +86,14 @@
             </div>
             <div>
                 <label
-                    style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Hashed
-                    Security Token (Password)</label>
-                <textarea readonly
-                    style="background: rgba(255,193,7,0.05); color: #ffc107; font-family: monospace; font-size: 0.75rem; border: 1px dashed rgba(255,193,7,0.3); padding: 12px; height: 100px; width: 100%; resize: none; border-radius: 8px;">{{ student.password }}</textarea>
+                    style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Access
+                    Key (Numbers & Letters)</label>
+                <div
+                    style="background: rgba(251, 191, 36, 0.05); color: #fbbf24; border: 1px dashed rgba(251, 191, 36, 0.3); font-family: monospace; padding: 12px; border-radius: 8px; font-size: 1.1rem; letter-spacing: 2px; text-align: center; font-weight: 800;">
+                    {{ student.visible_password if student.visible_password else 'LGCY_USER' }}
+                </div>
                 <p style="font-size: 0.7rem; color: var(--text-dim); margin-top: 8px; font-style: italic;">
-                    🔒 Note: Passwords are encrypted for safety. This hashed token represents the student's entry key.
+                    � This key contains only numbers and letters for student convenience.
                 </p>
             </div>
         </div>

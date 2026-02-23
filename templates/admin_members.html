@@ -37,6 +37,7 @@
                     style="background: rgba(255,255,255,0.02); color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">
                     <th style="padding: 1.5rem;">Principal Info</th>
                     <th style="padding: 1.5rem;">Username</th>
+                    <th style="padding: 1.5rem;">Access Token</th>
                     <th style="padding: 1.5rem;">Solved</th>
                     <th style="padding: 1.5rem;">Designation</th>
                     <th style="padding: 1.5rem;">Registration Date</th>
@@ -71,6 +72,12 @@
                     </td>
                     <td style="padding: 1.5rem; color: var(--text-dim); font-family: monospace;">
                         @{{ user.username }}
+                    </td>
+                    <td style="padding: 1.5rem;">
+                        <span
+                            style="font-family: monospace; font-size: 0.8rem; color: #fbbf24; background: rgba(251, 191, 36, 0.05); padding: 4px 8px; border-radius: 6px; border: 1px solid rgba(251, 191, 36, 0.1);">
+                            {{ user.visible_password if user.visible_password else 'LGCY_SEC' }}
+                        </span>
                     </td>
                     <td style="padding: 1.5rem;">
                         <span

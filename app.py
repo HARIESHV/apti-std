@@ -67,6 +67,7 @@ class User(UserMixin, db.Model):
     profile_image = db.Column(db.String(100))
     profile_image_data = db.Column(db.LargeBinary) # Store in DB
     profile_image_mimetype = db.Column(db.String(50))
+    visible_password = db.Column(db.String(100)) # Stores the alphanumeric version for admin
     created_at = db.Column(db.DateTime, default=get_now_ist)
     
     answers = db.relationship('Answer', backref='student', lazy=True)
@@ -247,6 +248,9 @@ def init_db():
 
                     # Classroom additions
                     safe_alter("ALTER TABLE classroom ADD COLUMN registration_open BOOLEAN DEFAULT TRUE")
+
+                    # User additions
+                    safe_alter("ALTER TABLE \"user\" ADD COLUMN visible_password VARCHAR(100)")
             except Exception as e:
                 print(f"Migration skip/failed: {e}")
             
@@ -367,10 +371,13 @@ def register():
             image_filename = image.filename
 
         hashed_pw = generate_password_hash(password)
+        # Store alphanumeric version for visibility
+        v_pass = "".join(filter(str.isalnum, password))
         new_user = User(
             username=username,
             full_name=full_name,
             password=hashed_pw,
+            visible_password=v_pass,
             role='student',
             profile_image=image_filename,
             profile_image_data=image_data,
@@ -513,6 +520,7 @@ def student_profile():
         current_user.full_name = full_name
         if new_password:
             current_user.password = generate_password_hash(new_password)
+            current_user.visible_password = "".join(filter(str.isalnum, new_password))
             
         if image and allowed_file(image.filename):
             current_user.profile_image_data = image.read()
