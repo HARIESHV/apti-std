@@ -204,76 +204,80 @@ def load_user(user_id):
 # --- Initialization ---
 
 def init_db():
-    with app.app_context():
-        db.create_all()
-        
-        # 🛡️ Migration: Add binary columns to existing databases if they don't exist
-        try:
-            with db.engine.connect() as conn:
-                # Detect if we are on SQLite
-                is_sqlite = db.engine.url.drivername == 'sqlite'
-                blob_type = "BLOB" if is_sqlite else "BYTEA"
-                
-                # User table
-                try: conn.execute(db.text(f"ALTER TABLE \"user\" ADD COLUMN profile_image_data {blob_type}"))
-                except: pass
-                try: conn.execute(db.text("ALTER TABLE \"user\" ADD COLUMN profile_image_mimetype VARCHAR(50)"))
-                except: pass
-                
-                # Question table
-                try: conn.execute(db.text(f"ALTER TABLE question ADD COLUMN image_data {blob_type}"))
-                except: pass
-                try: conn.execute(db.text("ALTER TABLE question ADD COLUMN image_mimetype VARCHAR(50)"))
-                except: pass
-                
-                # Answer table
-                try: conn.execute(db.text(f"ALTER TABLE answer ADD COLUMN file_data {blob_type}"))
-                except: pass
-                try: conn.execute(db.text("ALTER TABLE answer ADD COLUMN file_mimetype VARCHAR(50)"))
-                except: pass
-                try: conn.execute(db.text("ALTER TABLE answer ADD COLUMN file_name VARCHAR(100)"))
-                except: pass
-                
-                # Notification table
-                try: conn.execute(db.text("ALTER TABLE notification ADD COLUMN type VARCHAR(50)"))
-                except: pass
-                
-                # Message table (handled by create_all normally, but let's be safe for existing users)
-                try: conn.execute(db.text(f"ALTER TABLE message ADD COLUMN file_data {blob_type}"))
-                except: pass
-                try: conn.execute(db.text("ALTER TABLE message ADD COLUMN file_mimetype VARCHAR(100)"))
-                except: pass
-                try: conn.execute(db.text("ALTER TABLE message ADD COLUMN file_name VARCHAR(255)"))
-                except: pass
-                
-                conn.commit()
-        except:
-            pass
-        
-        # Initialize Classroom
-        if not Classroom.query.first():
-            db.session.add(Classroom(
-                active_meet_link='https://meet.google.com/',
-                detected_title='Official Classroom',
-                is_live=False
-            ))
-            db.session.commit()
-        
-        # Check for default admin
-        if not User.query.filter_by(role='admin').first():
-            admin = User(
-                username='admin',
-                full_name='Administrator',
-                password=generate_password_hash('admin123'),
-                role='admin'
-            )
-            db.session.add(admin)
-            db.session.commit()
-            print("Default admin created: admin / admin123")
+    try:
+        with app.app_context():
+            db.create_all()
             
-        pass
+            # 🛡️ Migration: Add binary columns to existing databases if they don't exist
+            try:
+                with db.engine.connect() as conn:
+                    # Detect if we are on SQLite
+                    is_sqlite = db.engine.url.drivername == 'sqlite'
+                    blob_type = "BLOB" if is_sqlite else "BYTEA"
+                    
+                    # Wrap each ALTER in its own try/except to avoid stopping on one failure
+                    def safe_alter(sql):
+                        try:
+                            conn.execute(db.text(sql))
+                            conn.commit()
+                        except:
+                            pass
 
-init_db()
+                    # User table
+                    safe_alter(f"ALTER TABLE \"user\" ADD COLUMN profile_image_data {blob_type}")
+                    safe_alter("ALTER TABLE \"user\" ADD COLUMN profile_image_mimetype VARCHAR(50)")
+                    
+                    # Question table
+                    safe_alter(f"ALTER TABLE question ADD COLUMN image_data {blob_type}")
+                    safe_alter("ALTER TABLE question ADD COLUMN image_mimetype VARCHAR(50)")
+                    
+                    # Answer table
+                    safe_alter(f"ALTER TABLE answer ADD COLUMN file_data {blob_type}")
+                    safe_alter("ALTER TABLE answer ADD COLUMN file_mimetype VARCHAR(50)")
+                    safe_alter("ALTER TABLE answer ADD COLUMN file_name VARCHAR(100)")
+                    
+                    # Notification table
+                    safe_alter("ALTER TABLE notification ADD COLUMN type VARCHAR(50)")
+                    
+                    # Message table
+                    safe_alter(f"ALTER TABLE message ADD COLUMN file_data {blob_type}")
+                    safe_alter("ALTER TABLE message ADD COLUMN file_mimetype VARCHAR(100)")
+                    safe_alter("ALTER TABLE message ADD COLUMN file_name VARCHAR(255)")
+            except Exception as e:
+                print(f"Migration skip/failed: {e}")
+            
+            # Initialize Classroom
+            try:
+                if not Classroom.query.first():
+                    db.session.add(Classroom(
+                        active_meet_link='https://meet.google.com/',
+                        detected_title='Official Classroom',
+                        is_live=False
+                    ))
+                    db.session.commit()
+            except:
+                db.session.rollback()
+            
+            # Check for default admin
+            try:
+                if not User.query.filter_by(role='admin').first():
+                    admin = User(
+                        username='admin',
+                        full_name='Administrator',
+                        password=generate_password_hash('admin123'),
+                        role='admin'
+                    )
+                    db.session.add(admin)
+                    db.session.commit()
+                    print("Default admin created: admin / admin123")
+            except:
+                db.session.rollback()
+    except Exception as e:
+        print(f"Database initialization error: {e}")
+
+# Only call init_db if we're not in a testing environment or a multi-worker reload loop that might crash
+if os.environ.get('INITIALIZE_DB', 'true').lower() == 'true':
+    init_db()
 
 # --- Routes ---
 
@@ -394,8 +398,8 @@ def history():
         student = db.session.get(User, s.student_id)
         question = db.session.get(Question, s.question_id)
         results.append({
-            'student': student,
-            'question': question,
+            'student': student or {'username': 'Deleted', 'full_name': 'Deleted User'},
+            'question': question or {'text': 'Deleted Question'},
             'submitted_at': s.submitted_at,
             'selected_option': s.selected_option,
             'is_correct': s.is_correct
@@ -424,7 +428,10 @@ def admin_dashboard():
     meet_links = MeetLink.query.order_by(MeetLink.created_at.desc()).all()
 
     # Database health/type info
-    db_type = "PostgreSQL" if "postgresql" in str(db.engine.url) else "SQLite"
+    try:
+        db_type = "PostgreSQL" if "postgresql" in str(db.engine.url).lower() else "SQLite"
+    except:
+        db_type = "Unknown"
 
     return render_template('admin_dashboard.html', 
                          questions=questions, 
@@ -463,6 +470,8 @@ def admin_stats():
         'labels': sorted_dates,
         'counts': [reg_history[d] for d in sorted_dates]
     }
+
+    platform_stats['avg_attempts'] = (total_attempts / len(all_users)) if all_users else 0
 
     return render_template('admin_stats.html', 
                          platform_stats=platform_stats, 
@@ -560,8 +569,8 @@ def admin_submissions_dashboard():
         question = db.session.get(Question, s.question_id)
         results.append({
             'id': s.id,
-            'student': student,
-            'question': question,
+            'student': student or {'username': 'Deleted', 'full_name': 'Deleted User'},
+            'question': question or {'text': 'Deleted Question'},
             'submitted_at': s.submitted_at,
             'selected_option': s.selected_option,
             'is_correct': s.is_correct,
@@ -804,7 +813,7 @@ def student_dashboard():
     sorted_history_dates = sorted(history_map.keys())
     daily_stats = {
         'labels': sorted_history_dates,
-        'accuracy': [round(history_map[d]['correct'] / history_map[d]['total'] * 100, 1) for d in sorted_history_dates]
+        'accuracy': [round(history_map[d]['correct'] / history_map[d]['total'] * 100, 1) if history_map[d]['total'] > 0 else 0 for d in sorted_history_dates]
     }
 
     return render_template('student_dashboard.html', 
