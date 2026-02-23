@@ -47,7 +47,7 @@ elif db_url.startswith("postgres://"):
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=36500000)
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=3650) # 10 years
 
 db = SQLAlchemy(app)
 
