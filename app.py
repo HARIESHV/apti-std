@@ -537,8 +537,29 @@ def admin_submissions_dashboard():
 @login_required
 def admin_members_dashboard():
     if current_user.role != 'admin': return redirect(url_for('student_dashboard'))
-    members = User.query.filter_by(role='student').all()
-    return render_template('admin_students.html', all_users=members)
+    
+    # Calculate IST dates
+    now_ist = get_now_ist()
+    today_start = now_ist.replace(hour=0, minute=0, second=0, microsecond=0)
+    yesterday_start = today_start - timedelta(days=1)
+    tomorrow_start = today_start + timedelta(days=1)
+    
+    members = User.query.filter_by(role='student').order_by(User.created_at.desc()).all()
+    
+    # Registration counts
+    today_reg = User.query.filter(User.role == 'student', User.created_at >= today_start, User.created_at < tomorrow_start).count()
+    yesterday_reg = User.query.filter(User.role == 'student', User.created_at >= yesterday_start, User.created_at < today_start).count()
+    tomorrow_reg = 0 # Future registrations are usually 0, but added for completeness
+    
+    reg_stats = {
+        'today': today_reg,
+        'yesterday': yesterday_reg,
+        'tomorrow': tomorrow_reg,
+        'today_start': today_start,
+        'yesterday_start': yesterday_start
+    }
+    
+    return render_template('admin_students.html', all_users=members, reg_stats=reg_stats)
 
 @app.route('/admin/post_question', methods=['GET', 'POST'])
 @login_required
