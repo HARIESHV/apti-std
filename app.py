@@ -32,16 +32,26 @@ app.config['UPLOAD_FOLDER'] = 'uploads'
 app.config['QUESTION_IMAGE_FOLDER'] = 'static/question_images'
 app.config['PROFILE_IMAGE_FOLDER'] = 'static/profile_pics'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024  # 16MB limit
-db_url = os.environ.get('DATABASE_URL', 'sqlite:///aptipro.db')
-if db_url.startswith("postgres://"):
+
+# --- Database Configuration ---
+# Ensure instance folder exists for SQLite
+os.makedirs(app.instance_path, exist_ok=True)
+
+db_url = os.environ.get('DATABASE_URL')
+if not db_url:
+    # Use instance folder for SQLite by default
+    db_url = f"sqlite:///{os.path.join(app.instance_path, 'aptipro.db')}"
+elif db_url.startswith("postgres://"):
+    # Render's old postgres URLs need to be converted for SQLAlchemy
     db_url = db_url.replace("postgres://", "postgresql://", 1)
+
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=36500000)
 
 db = SQLAlchemy(app)
 
-# Ensure directories exist
+# Ensure other directories exist
 os.makedirs(app.config['UPLOAD_FOLDER'], exist_ok=True)
 os.makedirs(app.config['QUESTION_IMAGE_FOLDER'], exist_ok=True)
 os.makedirs(app.config['PROFILE_IMAGE_FOLDER'], exist_ok=True)
@@ -408,15 +418,21 @@ def admin_dashboard():
     
     questions = Question.query.order_by(Question.created_at.desc()).all()
     all_users = User.query.filter_by(role='student').all()
+    total_submissions = Answer.query.count()
         
     classroom = Classroom.query.first()
     meet_links = MeetLink.query.order_by(MeetLink.created_at.desc()).all()
+
+    # Database health/type info
+    db_type = "PostgreSQL" if "postgresql" in str(db.engine.url) else "SQLite"
 
     return render_template('admin_dashboard.html', 
                          questions=questions, 
                          classroom=classroom,
                          meet_links=meet_links,
-                         all_users=all_users)
+                         all_users=all_users,
+                         total_submissions=total_submissions,
+                         db_type=db_type)
 
 @app.route('/admin/stats')
 @login_required
