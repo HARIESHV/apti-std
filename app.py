@@ -318,7 +318,7 @@ def login():
             db.session.commit()
             
             resp = make_response(redirect(url_for('index')))
-            resp.set_cookie('returning_user', 'true', max_age=3153600000000000)
+            resp.set_cookie('returning_user', 'true', max_age=315360000) # 10 years
             return resp
         flash('Invalid credentials')
     return render_template('login.html')
@@ -383,7 +383,7 @@ def register():
         login_user(new_user)
         flash('Account created!')
         resp = make_response(redirect(url_for('student_dashboard')))
-        resp.set_cookie('returning_user', 'true', max_age=3153600000000)
+        resp.set_cookie('returning_user', 'true', max_age=315360000) # 10 years
         return resp
         
 @app.route('/history')
