@@ -13,10 +13,12 @@
                 style="padding: 1rem 0.5rem; background: none; border: none; font-weight: 800; font-size: 1.1rem; color: var(--primary); cursor: pointer; border-bottom: 3px solid var(--primary); transition: all 0.3s ease;">
                 Sign In
             </button>
+            {% if registration_open %}
             <button id="register-tab" onclick="switchTab('register')"
                 style="padding: 1rem 0.5rem; background: none; border: none; font-weight: 800; font-size: 1.1rem; color: var(--text-dim); cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s ease;">
                 Register
             </button>
+            {% endif %}
         </div>
 
         <!-- Login Form -->

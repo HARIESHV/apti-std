@@ -131,6 +131,7 @@ class Classroom(db.Model):
     active_meet_link = db.Column(db.String(500), default='https://meet.google.com/')
     detected_title = db.Column(db.String(200), default='Official Classroom')
     is_live = db.Column(db.Boolean, default=False)
+    registration_open = db.Column(db.Boolean, default=True)
     updated_at = db.Column(db.DateTime, default=get_now_ist)
 
 class MeetLink(db.Model):
@@ -243,6 +244,9 @@ def init_db():
                     safe_alter(f"ALTER TABLE message ADD COLUMN file_data {blob_type}")
                     safe_alter("ALTER TABLE message ADD COLUMN file_mimetype VARCHAR(100)")
                     safe_alter("ALTER TABLE message ADD COLUMN file_name VARCHAR(255)")
+
+                    # Classroom additions
+                    safe_alter("ALTER TABLE classroom ADD COLUMN registration_open BOOLEAN DEFAULT TRUE")
             except Exception as e:
                 print(f"Migration skip/failed: {e}")
             
@@ -252,7 +256,8 @@ def init_db():
                     db.session.add(Classroom(
                         active_meet_link='https://meet.google.com/',
                         detected_title='Official Classroom',
-                        is_live=False
+                        is_live=False,
+                        registration_open=True
                     ))
                     db.session.commit()
             except:
@@ -321,12 +326,20 @@ def login():
             resp.set_cookie('returning_user', 'true', max_age=315360000) # 10 years
             return resp
         flash('Invalid credentials')
-    return render_template('login.html')
+    
+    classroom = Classroom.query.first()
+    registration_open = classroom.registration_open if classroom else True
+    return render_template('login.html', registration_open=registration_open)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
+    
+    classroom = Classroom.query.first()
+    if classroom and not classroom.registration_open:
+        flash('Registration is currently closed by the administrator.')
+        return redirect(url_for('login'))
         
     if request.method == 'POST':
         username = request.form.get('username')
@@ -700,12 +713,14 @@ def update_classroom():
     if current_user.role != 'admin': return redirect(url_for('student_dashboard'))
     link = request.form.get('meet_link')
     is_live = 'is_live' in request.form
+    registration_open = 'registration_open' in request.form
     title, _ = get_meet_info(link) if link else ("Classroom", None)
     
     classroom = Classroom.query.first()
     if classroom:
         classroom.active_meet_link = link
         classroom.is_live = is_live
+        classroom.registration_open = registration_open
         classroom.detected_title = title
         classroom.updated_at = get_now_ist()
         

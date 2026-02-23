@@ -124,6 +124,12 @@
                             style="width: 18px; height: 18px; accent-color: var(--primary);">
                         <span>Set Status as Live</span>
                     </label>
+                    <label class="toggle-container"
+                        style="display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.9rem;">
+                        <input type="checkbox" name="registration_open" {% if classroom and classroom.registration_open
+                            %}checked{% endif %} style="width: 18px; height: 18px; accent-color: var(--accent);">
+                        <span>Registration Open</span>
+                    </label>
                     <button type="submit" class="btn btn-primary"
                         style="padding: 0.6rem 1.2rem; font-size: 0.85rem;">Update</button>
                 </div>
