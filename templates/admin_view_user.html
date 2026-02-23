@@ -65,26 +65,36 @@
             style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1.5rem; display: flex; align-items: center; gap: 10px; border-top: 1px solid var(--glass-border); padding-top: 1.5rem;">
             <svg style="width:20px;height:20px" viewBox="0 0 24 24">
                 <path fill="currentColor"
-                    d="M12,4A4,4 0 0,1 16,8A4,4 0 0,1 12,12A4,4 0 0,1 8,8A4,4 0 0,1 12,4M12,14C16.42,14 20,15.79 20,18V20H4V18C4,15.79 7.58,14 12,14Z" />
+                    d="M12,17A2,2 0 0,0 14,15C14,13.89 13.11,13 12,13A2,2 0 0,0 10,15A2,2 0 0,0 12,17M18,8H17V6A5,5 0 0,0 7,6V8H6A2,2 0 0,0 4,10V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V10A2,2 0 0,0 18,8M8,6A3,3 0 0,1 16,6V8H8V6Z" />
             </svg>
-            Edit Core Info
+            Security Credentials (Read-Only)
         </h2>
 
-        <form action="{{ url_for('admin_view_user', user_id=student.id) }}" method="POST"
-            style="display: grid; gap: 1.5rem;">
+        <div style="display: grid; gap: 1.5rem;">
             <div>
                 <label
                     style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Full
                     Name</label>
-                <input type="text" name="full_name" value="{{ student.full_name }}" required>
+                <input type="text" value="{{ student.full_name }}" readonly
+                    style="background: rgba(255,255,255,0.02); border-color: transparent; cursor: default; opacity: 0.8;">
             </div>
             <div>
                 <label
                     style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Username</label>
-                <input type="text" name="username" value="{{ student.username }}" required>
+                <input type="text" value="{{ student.username }}" readonly
+                    style="background: rgba(255,255,255,0.02); border-color: transparent; cursor: default; opacity: 0.8;">
             </div>
-            <button type="submit" class="btn btn-primary" style="margin-top: 1rem;">Apply Account Changes</button>
-        </form>
+            <div>
+                <label
+                    style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Hashed
+                    Security Token (Password)</label>
+                <textarea readonly
+                    style="background: rgba(255,193,7,0.05); color: #ffc107; font-family: monospace; font-size: 0.75rem; border: 1px dashed rgba(255,193,7,0.3); padding: 12px; height: 100px; width: 100%; resize: none; border-radius: 8px;">{{ student.password }}</textarea>
+                <p style="font-size: 0.7rem; color: var(--text-dim); margin-top: 8px; font-style: italic;">
+                    🔒 Note: Passwords are encrypted for safety. This hashed token represents the student's entry key.
+                </p>
+            </div>
+        </div>
     </div>
 
     <!-- Latest Submissions -->

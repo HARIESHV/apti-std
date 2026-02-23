@@ -529,7 +529,7 @@ def student_profile():
         
     return render_template('student_profile.html', user=current_user)
 
-@app.route('/admin/user/<int:user_id>', methods=['GET', 'POST'])
+@app.route('/admin/user/<int:user_id>', methods=['GET'])
 @login_required
 def admin_view_user(user_id):
     if current_user.role != 'admin':
@@ -539,14 +539,6 @@ def admin_view_user(user_id):
     if not user:
         flash('User not found')
         return redirect(url_for('admin_members_dashboard'))
-    
-    if request.method == 'POST':
-        user.full_name = request.form.get('full_name')
-        user.username = request.form.get('username')
-            
-        db.session.commit()
-        flash('User profile updated!')
-        return redirect(url_for('admin_view_user', user_id=user.id))
         
     # Get user stats
     user_answers = Answer.query.filter_by(student_id=user.id).all()
