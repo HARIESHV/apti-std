@@ -17,8 +17,9 @@
             <h1 style="font-size: 2.8rem; font-weight: 800; margin-bottom: 0.75rem; letter-spacing: -1.5px;">
                 Platform <span class="text-gradient">Analytics</span>
             </h1>
-            <p style="color: var(--text-dim); font-size: 1.1rem; max-width: 600px;">Comprehensive breakdown of your
-                campus performance and student engagement levels.</p>
+            <p style="color: var(--text-dim); font-size: 1.1rem; max-width: 600px;">Comprehensive lifetime breakdown of
+                your
+                campus performance and student engagement levels across all years.</p>
         </div>
     </div>
 </div>
@@ -153,9 +154,24 @@
                 <div style="font-weight: 700; color: var(--text-main); margin-bottom: 5px;">Community Strength</div>
                 <div style="font-size: 0.85rem; color: var(--text-dim);">Each student averages approximately <strong>{{
                         "{:.1f}".format(platform_stats.total_attempts / all_users|length if all_users|length > 0 else 0)
-                        }}</strong> attempts.</div>
+                        }}</strong> attempts over their lifetime.</div>
             </div>
         </div>
+    </div>
+</div>
+
+<div class="card glass-panel animate-fade-in" style="padding: 2.5rem; margin-bottom: 4rem;">
+    <h2
+        style="font-size: 1.5rem; font-weight: 700; margin-bottom: 2rem; display: flex; align-items: center; gap: 12px;">
+        <svg style="width:24px; height:24px; color: #f59e0b;" viewBox="0 0 24 24">
+            <path fill="currentColor"
+                d="M16,13C15.71,13 15.38,13 15.03,13.05C16.19,13.89 17,15 17,16.5V19H23V16.5C23,14.17 18.33,13 16,13M8,13C5.67,13 1,14.17 1,16.5V19H15V16.5C15,14.17 10.33,13 8,13M8,11A3,3 0 0,0 11,8A3,3 0 0,0 8,5A3,3 0 0,0 5,8A3,3 0 0,0 8,11M16,11A3,3 0 0,0 19,8A3,3 0 0,0 16,5A3,3 0 0,0 13,8A3,3 0 0,0 16,11Z" />
+        </svg>
+        Lifetime Community Growth
+    </h2>
+    <div style="height: 300px; width: 100%;">
+        <canvas id="growthChart" data-labels='{{ growth_data.labels|tojson }}'
+            data-counts='{{ growth_data.counts|tojson }}'></canvas>
     </div>
 </div>
 {% endblock %}
@@ -201,6 +217,53 @@
                 }
             }
         });
+
+        // Growth Chart
+        const growthCanvas = document.getElementById('growthChart');
+        if (growthCanvas) {
+            const growthLabels = JSON.parse(growthCanvas.dataset.labels);
+            const growthCounts = JSON.parse(growthCanvas.dataset.counts);
+
+            // Calculate cumulative counts for lifetime vision
+            let cumulative = 0;
+            const cumulativeCounts = growthCounts.map(count => {
+                cumulative += count;
+                return cumulative;
+            });
+
+            new Chart(growthCanvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: growthLabels,
+                    datasets: [{
+                        label: 'Lifetime Members',
+                        data: cumulativeCounts,
+                        backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                        borderColor: '#f59e0b',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#f59e0b'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: { color: 'rgba(255,255,255,0.5)' }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: 'rgba(255,255,255,0.5)' }
+                        }
+                    }
+                }
+            });
+        }
     });
 </script>
 {% endblock %}

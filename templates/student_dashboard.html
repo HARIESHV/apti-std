@@ -7,9 +7,12 @@
         <div>
             <h1 style="font-size: 2.8rem; font-weight: 800; margin-bottom: 0.75rem; letter-spacing: -1.5px;">
                 Welcome, <span class="text-gradient">{{ current_user.full_name or current_user.username }}</span>
+                <span
+                    style="font-size: 0.7rem; vertical-align: middle; background: var(--accent); color: white; padding: 4px 10px; border-radius: 20px; margin-left: 10px; font-weight: 800; letter-spacing: 1px; box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);">LIFETIME
+                    MEMBER</span>
             </h1>
-            <p style="color: var(--text-dim); font-size: 1.1rem; max-width: 500px;">Ready to conquer today's challenges?
-                Your progress is tracked and your potential is limitless.</p>
+            <p style="color: var(--text-dim); font-size: 1.1rem; max-width: 500px;">Your lifetime potential is
+                limitless. All your progress is stored for eternity.</p>
         </div>
         <div style="display: flex; gap: 2.5rem; align-items: center;">
             <div style="text-align: center;">
@@ -482,6 +485,58 @@
                     }]
                 },
                 options: chartOptions
+            });
+        }
+
+        const historyCanvas = document.getElementById('historyChart');
+        if (historyCanvas) {
+            const historyLabels = JSON.parse(historyCanvas.dataset.labels);
+            const historyAccuracy = JSON.parse(historyCanvas.dataset.accuracy);
+
+            new Chart(historyCanvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: historyLabels,
+                    datasets: [{
+                        label: 'Accuracy %',
+                        data: historyAccuracy,
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        borderColor: '#6366f1',
+                        borderWidth: 3,
+                        tension: 0.4,
+                        fill: true,
+                        pointBackgroundColor: '#6366f1'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: function (context) {
+                                    return context.parsed.y + '% Accuracy';
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            grid: { color: 'rgba(255,255,255,0.05)' },
+                            ticks: {
+                                color: 'rgba(255,255,255,0.5)',
+                                callback: function (value) { return value + "%"; }
+                            }
+                        },
+                        x: {
+                            grid: { display: false },
+                            ticks: { color: 'rgba(255,255,255,0.5)' }
+                        }
+                    }
+                }
             });
         }
 

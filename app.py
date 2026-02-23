@@ -37,6 +37,7 @@ if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=36500000)
 
 db = SQLAlchemy(app)
 
@@ -303,7 +304,7 @@ def login():
             db.session.commit()
             
             resp = make_response(redirect(url_for('index')))
-            resp.set_cookie('returning_user', 'true', max_age=30*24*60*60)
+            resp.set_cookie('returning_user', 'true', max_age=3153600000000000)
             return resp
         flash('Invalid credentials')
     return render_template('login.html')
@@ -318,7 +319,7 @@ def register():
         full_name = request.form.get('full_name')
         password = request.form.get('password')
         
-        max_members = 500
+        max_members = 1000000000
         current_members = User.query.filter_by(role='student').count()
         
         if current_members >= max_members:
@@ -368,7 +369,7 @@ def register():
         login_user(new_user)
         flash('Account created!')
         resp = make_response(redirect(url_for('student_dashboard')))
-        resp.set_cookie('returning_user', 'true', max_age=30*24*60*60)
+        resp.set_cookie('returning_user', 'true', max_age=3153600000000)
         return resp
         
 @app.route('/history')
@@ -433,10 +434,24 @@ def admin_stats():
         'accuracy': (total_solved / total_attempts * 100) if total_attempts > 0 else 0
     }
     
-    # Optional: Get stats over time for a chart
+    # Registration growth history
+    reg_history = {}
+    for u in all_users:
+        if u.created_at:
+            d = u.created_at.strftime('%Y-%m-%d')
+            reg_history[d] = reg_history.get(d, 0) + 1
+    
+    # Sort dates
+    sorted_dates = sorted(reg_history.keys())
+    growth_data = {
+        'labels': sorted_dates,
+        'counts': [reg_history[d] for d in sorted_dates]
+    }
+
     return render_template('admin_stats.html', 
                          platform_stats=platform_stats, 
-                         all_users=all_users)
+                         all_users=all_users,
+                         growth_data=growth_data)
 
 @app.route('/admin/activity')
 @login_required
@@ -750,11 +765,28 @@ def student_dashboard():
     classroom = Classroom.query.first()
     active_meet_links = MeetLink.query.filter_by(is_active=True).all()
 
+    # Lifetime Performance History
+    history_map = {}
+    for a in answers_list:
+        if a.submitted_at:
+            d = a.submitted_at.strftime('%Y-%m-%d')
+            if d not in history_map:
+                history_map[d] = {'correct': 0, 'total': 0}
+            history_map[d]['total'] += 1
+            if a.is_correct:
+                history_map[d]['correct'] += 1
+    
+    sorted_history_dates = sorted(history_map.keys())
+    daily_stats = {
+        'labels': sorted_history_dates,
+        'accuracy': [round(history_map[d]['correct'] / history_map[d]['total'] * 100, 1) for d in sorted_history_dates]
+    }
+
     return render_template('student_dashboard.html', 
                          questions=questions, user_answers=user_answers, 
                          user_attempts=user_attempts, stats=stats, 
                          classroom=classroom, active_meet_links=active_meet_links,
-                         daily_stats=[],
+                         daily_stats=daily_stats,
                          server_now=get_now_ist().timestamp() * 1000)
 
 @app.route('/student/start_attempt', methods=['POST'])
