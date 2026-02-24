@@ -1,83 +1,136 @@
-# 🚀 AptitudePro - Global Deployment Guide
+# 🛡️ AptitudePro — Deployment & Database Safety Guide
 
-## 📋 Overview
-AptitudePro is a Flask-based aptitude quiz platform with separate portals for students and administrators.
+## ⚠️ #1 Rule: Database Safety
 
-## 🌍 Deploy to Render.com (Recommended)
+> **Code updates via VS Code and GitHub NEVER delete, reset, or overwrite database data.**
+>
+> This is enforced through: additive-only migrations, `.gitignore` exclusions, and
+> `db.create_all()` (which only creates missing tables — never drops or modifies existing ones).
 
-### Step 1: Prepare Your Code
-1. Make sure all files are committed to Git:
-   ```bash
-   git add .
-   git commit -m "Prepare for deployment"
-   ```
+---
 
-2. Push to GitHub:
-   ```bash
-   git remote add origin https://github.com/YOUR_USERNAME/YOUR_REPO.git
-   git branch -M main
-   git push -u origin main
-   ```
+## 🗄️ Database Architecture
 
-### Step 2: Deploy on Render
-1. Go to [render.com](https://render.com) and sign up/login
-2. Click **"New +"** → **"Web Service"**
-3. Connect your GitHub repository
-4. Configure the service:
-   - **Name**: `aptitudepro` (or your choice)
-   - **Environment**: `Python 3`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `python app.py`
-   - **Instance Type**: Free
+| Environment | Engine | Location | Git-tracked? |
+|---|---|---|---|
+| Local Dev | SQLite | `instance/aptipro.db` | ❌ No (`.gitignore`) |
+| Production | PostgreSQL | Render managed DB | ❌ No (external service) |
 
-5. Add Environment Variables:
-   - Click **"Advanced"** → **"Add Environment Variable"**
-   - Add: `SECRET_KEY` = `your-super-secret-random-key-here-change-this`
+### Why data is always safe:
+1. `.gitignore` includes `*.db` and `instance/` — database files **never enter Git**
+2. `db.create_all()` only **adds** new tables, never drops existing ones
+3. `safe_alter()` — only **adds** new columns; if a column already exists, the error is silently ignored
+4. **No `db.drop_all()`, `TRUNCATE`, or `DROP TABLE` anywhere in the codebase**
+5. Seeding code uses `if not X.query.first():` guards — only seeds on first run, never overwrites
 
-6. Click **"Create Web Service"**
+---
 
-### Step 3: Access Your App
-- Render will provide a URL like: `https://aptitudepro.onrender.com`
-- Share this URL with anyone worldwide! 🌍
+## 📋 Safe Deployment Steps (Every Time)
 
-## ⚠️ Important Notes
+### 1. Backup the database (locally)
+```bash
+python backup_db.py
+```
+Creates a timestamped backup in `backups/`. Verify it was created.
 
-### Database Persistence
-- **Current Setup**: Uses SQLite (`answer.db`)
-- **Issue**: On Render's free tier, SQLite data is ephemeral (resets on restart)
-- **Solution**: Upgrade to PostgreSQL for persistent data:
-  1. In Render dashboard, create a new PostgreSQL database
-  2. Copy the "Internal Database URL"
-  3. Update environment variable: `DATABASE_URL` = `<your-postgres-url>`
-  4. Update `app.py` line 12 to use `os.environ.get('DATABASE_URL', 'sqlite:///answer.db')`
+### 2. Commit only code (NOT database)
+```bash
+git status       # Verify instance/ and *.db are NOT listed
+git add .
+git commit -m "Update: describe your change here"
+git push origin main
+```
 
-### Security
-- Change the `SECRET_KEY` in environment variables to a random string
-- Change default admin password after first login (admin/adminpassword)
+### 3. Monitor Render logs after deploy
+Look for this line in Render logs → confirms safe migration ran:
+```
+[DB] ✅ Initialization complete. All existing data preserved.
+```
 
-## 🔧 Alternative Deployment Options
+---
 
-### Railway.app
-1. Go to [railway.app](https://railway.app)
-2. Click "Start a New Project" → "Deploy from GitHub repo"
-3. Select your repository
-4. Railway auto-detects Flask and deploys!
+## 🌐 Render.com Configuration
 
-### PythonAnywhere
-1. Go to [pythonanywhere.com](https://www.pythonanywhere.com)
-2. Sign up for free account
-3. Upload your code via Git or file upload
-4. Configure WSGI file to point to your app
-5. Set up virtual environment and install requirements
+### render.yaml (already configured)
+```yaml
+services:
+  - type: web
+    name: aptipro
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app
+    envVars:
+      - key: DATABASE_URL
+        fromDatabase:
+          name: aptipro-db
+          property: connectionString
+      - key: SECRET_KEY
+        generateValue: true
+```
 
-## 📱 Local Network Access (Already Working)
-Your app is already configured for local network access:
-- Run: `python app.py`
-- Access from any device on your network: `http://YOUR_LOCAL_IP:5000`
+### Required Environment Variables (set in Render Dashboard)
+| Variable | Required | Description |
+|---|---|---|
+| `DATABASE_URL` | ✅ Yes | Auto-set from linked Render PostgreSQL DB |
+| `SECRET_KEY` | ✅ Yes | Auto-generated by Render |
+| `INITIALIZE_DB` | Optional | Default `true` — safe to leave on |
 
-## 🎯 Default Credentials
-- **Admin**: username: `admin`, password: `adminpassword`
-- **Students**: Register via `/register` route
+---
 
-## 📞 Support
-For issues, check the deployment logs on your hosting platform.
+## 🔧 How Safe Migrations Work
+
+On every app startup, `init_db()` in `app.py`:
+
+```python
+db.create_all()           # Creates missing tables ONLY — never touches existing ones
+
+safe_alter("ALTER TABLE answer ADD COLUMN is_expired BOOLEAN DEFAULT FALSE")
+# → If column exists: DB raises error → silently ignored ✅
+# → If column missing: column is added ✅
+# → Existing rows: untouched, get DEFAULT value ✅
+```
+
+This makes every deploy **fully idempotent** — safe to run 100 times on the same database.
+
+---
+
+## 🆘 Emergency Restore (Local)
+
+```bash
+# Stop the app, then:
+copy backups\aptipro_YYYYMMDD_HHMMSS.db instance\aptipro.db
+python app.py
+```
+
+For production PostgreSQL, use Render Dashboard → Your DB → Backups.
+
+---
+
+## 🔐 Security Checklist
+
+- [ ] `SECRET_KEY` set to a random string in Render environment
+- [ ] Default admin password changed after first login
+- [ ] `DATABASE_URL` pointing to Render PostgreSQL (not SQLite) in production
+- [ ] `.env` file is in `.gitignore` (never committed)
+
+---
+
+## 📱 Local Development
+
+```bash
+# Run locally:
+python app.py
+
+# Back up database before any code changes:
+python backup_db.py
+```
+
+Access: `http://localhost:5000` or `http://YOUR_LOCAL_IP:5000`
+
+---
+
+## 🎯 Default Credentials (First-Run Only)
+
+- **Admin**: `admin` / `admin123`
+- ⚠️ Change this immediately after first login!
+- Students register via the registration page

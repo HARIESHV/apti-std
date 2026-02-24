@@ -1,147 +1,128 @@
 ---
-description: How to deploy the AptitudePro website
+description: How to deploy the AptitudePro website safely without losing database data
 ---
 
-# Deployment Guide - Worldwide Access 🌍
+# 🚀 AptitudePro — Safe Deployment Workflow
 
-This guide covers how to deploy the **AptitudePro** website for **worldwide access**.
+> ⚠️ **DATABASE SAFETY FIRST**: Every deployment must follow these steps in order.
+> NEVER use `db.drop_all()`, `--force`, or reset flags. All migrations are additive-only.
 
-## 🚀 Quick Deploy to Render.com (Recommended)
+---
 
-### Prerequisites
-1. A GitHub account
-2. A Render.com account (free tier available)
+## 📋 Pre-Deployment Checklist (Run Locally Before Every Push)
 
-### Step 1: Push Code to GitHub
+### Step 1: Backup the Database
 // turbo
 ```bash
+python backup_db.py
+```
+This creates a timestamped copy in `/backups/`. Verify it was created before continuing.
+
+### Step 2: Review Your Changes
+Check that no code changes include any of these dangerous patterns:
+- `db.drop_all()` — NEVER use in production
+- `db.session.execute("DROP TABLE ...")` — NEVER
+- `SQLALCHEMY_TRACK_MODIFICATIONS = True` with sync — NEVER
+- Any `--force-reset` or `--recreate-db` flags
+
+### Step 3: Commit ONLY Code (not database files)
+// turbo
+```bash
+git status
+```
+Confirm that `.db` files and `instance/` folder appear in `.gitignore` and are NOT staged.
+
+```bash
 git add .
-git commit -m "Prepare for worldwide deployment"
+git status
+```
+Make sure `instance/aptipro.db` is NOT in the staged files list.
+
+### Step 4: Write a Safe Commit Message
+// turbo
+```bash
+git commit -m "Update: [describe change] — no schema drops, additive migrations only"
+```
+
+### Step 5: Push to GitHub
+// turbo
+```bash
 git push origin main
 ```
 
-If you don't have a GitHub repo yet:
-```bash
-git init
-git add .
-git commit -m "Initial commit"
-git branch -M main
-git remote add origin https://github.com/YOUR_USERNAME/aptitudepro.git
-git push -u origin main
+---
+
+## 🌐 Render.com Deployment (Production)
+
+### Environment Variables (Set Once in Render Dashboard)
+These must be configured in Render → Your Service → Environment:
+
+| Variable | Value | Notes |
+|---|---|---|
+| `DATABASE_URL` | PostgreSQL connection string | From Render DB → Internal URL |
+| `SECRET_KEY` | Random 64-char string | Generate once, never change |
+| `INITIALIZE_DB` | `true` | Safe — migrations are additive only |
+| `PYTHON_VERSION` | `3.11.0` | |
+
+### Render Auto-Deploy
+After `git push`, Render automatically:
+1. Installs `requirements.txt`
+2. Starts `gunicorn app:app`
+3. `init_db()` runs → creates new tables / adds new columns only
+4. **All existing data is preserved** ✅
+
+---
+
+## 🗄️ Database Architecture
+
+### Local Development (SQLite)
+- File: `instance/aptipro.db`
+- Excluded from Git: ✅ (`.gitignore` covers `*.db` and `instance/`)
+- Backup before every push: ✅ (`python backup_db.py`)
+
+### Production (PostgreSQL on Render)
+- Managed by Render's PostgreSQL service (`aptipro-db`)
+- Persists across all deployments automatically
+- Connection via `DATABASE_URL` environment variable
+- **Data is never reset by code pushes**
+
+---
+
+## 🛡️ How Safe Migrations Work
+
+Every time the app starts, `init_db()` runs **additive-only** operations:
+
+```
+db.create_all()          → Creates NEW tables only. Existing tables untouched.
+safe_alter("ALTER TABLE ... ADD COLUMN ...")
+                         → Adds NEW columns only. If column exists → silently ignored.
+                           NEVER drops rows, tables, or columns.
 ```
 
-### Step 2: Deploy on Render
-1. Go to [render.com](https://render.com) and sign up/login with GitHub
-2. Click **"New +"** → **"Web Service"**
-3. Click **"Connect a repository"** and select your repo
-4. Configure the service:
-   - **Name**: `aptitudepro` (or your choice)
-   - **Region**: Choose closest to your users
-   - **Branch**: `main`
-   - **Runtime**: `Python 3`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `python app.py`
-   - **Instance Type**: `Free`
-
-5. **Add Environment Variables** (Click "Advanced"):
-   - `SECRET_KEY` = `your-super-secret-random-key-change-this-123456789`
-   - `PYTHON_VERSION` = `3.11.0` (optional, Render auto-detects)
-
-6. Click **"Create Web Service"**
-
-### Step 3: Wait for Deployment
-- Render will build and deploy your app (takes 2-5 minutes)
-- You'll get a URL like: `https://aptitudepro.onrender.com`
-- **Share this URL worldwide!** 🌍
-
-### Step 4: First-Time Setup
-1. Visit your Render URL
-2. Login with default admin credentials:
-   - Username: `admin`
-   - Password: `adminpassword`
-3. **IMPORTANT**: Change the admin password immediately!
+This means you can push code updates **as many times as you want** and the database
+will never lose any data.
 
 ---
 
-## 📊 Database Persistence (Important!)
+## 🆘 Emergency Recovery
 
-### Current Setup Issue
-- SQLite database (`answer.db`) is **ephemeral** on Render free tier
-- Data will be **lost on app restart** or redeployment
-
-### Solution: Upgrade to PostgreSQL
-1. In Render dashboard, click **"New +"** → **"PostgreSQL"**
-2. Create a free PostgreSQL database
-3. Copy the **"Internal Database URL"**
-4. In your Web Service, add environment variable:
-   - `DATABASE_URL` = `<paste-internal-database-url>`
-5. Render will auto-restart your app with persistent database!
-
----
-
-## 🔐 Security Checklist
-- [ ] Change `SECRET_KEY` environment variable to a random string
-- [ ] Change default admin password after first login
-- [ ] Set up PostgreSQL for data persistence
-- [ ] Consider adding rate limiting for production
-
----
-
-## 🌐 Alternative Deployment Options
-
-### Option 2: Railway.app
-1. Go to [railway.app](https://railway.app)
-2. Click **"Start a New Project"** → **"Deploy from GitHub repo"**
-3. Select your repository
-4. Railway auto-detects Flask and deploys!
-5. Add environment variable: `SECRET_KEY`
-6. Get your URL: `https://your-app.railway.app`
-
-### Option 3: PythonAnywhere (Free Tier)
-1. Go to [pythonanywhere.com](https://www.pythonanywhere.com)
-2. Sign up for free account
-3. Go to **"Web"** tab → **"Add a new web app"**
-4. Choose **"Manual configuration"** → **"Python 3.10"**
-5. Upload code via Git or Files tab
-6. Configure WSGI file to point to your `app.py`
-7. Install requirements in virtual environment
-8. Reload web app
-9. Access at: `https://yourusername.pythonanywhere.com`
-
----
-
-## 📱 Local Network Access (Already Working)
-Your app is already configured for local network access:
+If something goes wrong, restore from backup:
 ```bash
+# Stop the app first, then:
+copy backups\aptipro_YYYYMMDD_HHMMSS.db instance\aptipro.db
 python app.py
 ```
-Access from any device on your network: `http://YOUR_LOCAL_IP:5000`
+
+For PostgreSQL (production), use Render's built-in database backups from the Render dashboard.
 
 ---
 
-## 🎯 Default Credentials
-- **Admin**: `admin` / `adminpassword` (change immediately!)
-- **Students**: Register via the registration page
+## ✅ Safe Deploy Summary
 
----
-
-## 🐛 Troubleshooting
-
-### Build Fails on Render
-- Check that `requirements.txt` is in the root directory
-- Verify all dependencies are compatible with Python 3.11
-
-### App Crashes After Deploy
-- Check Render logs: Dashboard → Your Service → Logs
-- Ensure environment variables are set correctly
-
-### Database Issues
-- If using SQLite: Data resets on restart (upgrade to PostgreSQL)
-- If using PostgreSQL: Verify `DATABASE_URL` is set correctly
-
----
-
-## 📞 Support
-- Check deployment logs on your hosting platform
-- Render logs: Dashboard → Logs tab
-- Railway logs: Click on deployment → View logs
+```
+1. python backup_db.py     → Backup local DB
+2. git add .               → Stage code only (DB excluded by .gitignore)
+3. git commit -m "..."     → Commit
+4. git push origin main    → Deploy to Render
+5. Monitor Render logs     → Confirm "Initialization complete. All existing data preserved."
+```

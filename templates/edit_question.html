@@ -108,9 +108,31 @@
                 </div>
                 <div>
                     <label
-                        style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Time
-                        Limit (mins)</label>
-                    <input type="number" name="time_limit" value="{{ q.time_limit }}" min="0" required>
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Question
+                        Time Limit (Days : Hrs : Min : Sec)</label>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
+                        <input type="number" name="timer_days" value="{{ q.timer_days or 0 }}" min="0"
+                            placeholder="Days" style="padding: 0.5rem; font-size: 0.8rem;">
+                        <input type="number" name="timer_hours" value="{{ q.timer_hours or 0 }}" min="0" max="23"
+                            placeholder="Hrs" style="padding: 0.5rem; font-size: 0.8rem;">
+                        <input type="number" name="timer_minutes" value="{{ q.timer_minutes or 0 }}" min="0" max="59"
+                            placeholder="Min" style="padding: 0.5rem; font-size: 0.8rem;">
+                        <input type="number" name="timer_seconds" value="{{ q.timer_seconds or 0 }}" min="0" max="59"
+                            placeholder="Sec" style="padding: 0.5rem; font-size: 0.8rem;">
+                    </div>
+                    <div style="margin-top: 0.75rem; display: flex; gap: 1rem; align-items: center;">
+                        <label
+                            style="font-size: 0.75rem; color: var(--text-dim); display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="radio" name="timer_display_format" value="days" {% if
+                                q.timer_display_format=='days' or not q.timer_display_format %}checked{% endif %}
+                                style="width: auto;"> Days + Time
+                        </label>
+                        <label
+                            style="font-size: 0.75rem; color: var(--text-dim); display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="radio" name="timer_display_format" value="hours" {% if
+                                q.timer_display_format=='hours' %}checked{% endif %} style="width: auto;"> Hours Only
+                        </label>
+                    </div>
                 </div>
             </div>
 

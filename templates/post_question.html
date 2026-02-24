@@ -186,7 +186,7 @@
                 </div>
             </div>
 
-            <!-- Correct Answer + Time Limit -->
+            <!-- Correct Answer + Granular Timer -->
             <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
                 <div>
                     <label
@@ -201,17 +201,32 @@
                 </div>
                 <div>
                     <label
-                        style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Time
-                        Limit (0 for No Limit)</label>
-                    <div style="display: flex; gap: 0.5rem;">
-                        <input type="number" name="time_limit" value="10" min="0" required style="flex: 2;">
-                        <select name="time_unit" required id="unitSelector"
-                            style="flex: 1; background: rgba(99, 102, 241, 0.15); border: 1.5px solid var(--primary); font-weight: 700; color: white;">
-                            <option value="minutes">Minutes</option>
-                            <option value="days">Days</option>
-                            <option value="seconds">Seconds</option>
-                        </select>
+                        style="display: block; margin-bottom: 0.5rem; color: var(--text-dim); font-size: 0.85rem; font-weight: 600;">Question
+                        Time Limit (Days : Hrs : Min : Sec)</label>
+                    <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem;">
+                        <input type="number" name="timer_days" value="0" min="0" placeholder="Days"
+                            style="padding: 0.5rem; font-size: 0.8rem;">
+                        <input type="number" name="timer_hours" value="0" min="0" max="23" placeholder="Hrs"
+                            style="padding: 0.5rem; font-size: 0.8rem;">
+                        <input type="number" name="timer_minutes" value="10" min="0" max="59" placeholder="Min"
+                            style="padding: 0.5rem; font-size: 0.8rem;">
+                        <input type="number" name="timer_seconds" value="0" min="0" max="59" placeholder="Sec"
+                            style="padding: 0.5rem; font-size: 0.8rem;">
                     </div>
+                    <div style="margin-top: 0.75rem; display: flex; gap: 1rem; align-items: center;">
+                        <label
+                            style="font-size: 0.75rem; color: var(--text-dim); display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="radio" name="timer_display_format" value="days" checked style="width: auto;">
+                            Days + Time
+                        </label>
+                        <label
+                            style="font-size: 0.75rem; color: var(--text-dim); display: flex; align-items: center; gap: 6px; cursor: pointer;">
+                            <input type="radio" name="timer_display_format" value="hours" style="width: auto;"> Hours
+                            Only
+                        </label>
+                    </div>
+                    <p style="font-size: 0.7rem; color: var(--text-dim); margin-top: 4px;">Set all to 0 for unlimited
+                        time.</p>
                 </div>
             </div>
 
@@ -257,20 +272,6 @@
             imagePreview.style.display = 'none';
         }
     });
-
-    // Dynamic Unit Selector Color
-    const unitSelector = document.getElementById('unitSelector');
-    function updateUnitColor() {
-        if (unitSelector.value === 'days') {
-            unitSelector.style.background = 'rgba(16, 185, 129, 0.15)';
-            unitSelector.style.borderColor = 'var(--accent)';
-        } else {
-            unitSelector.style.background = 'rgba(99, 102, 241, 0.15)';
-            unitSelector.style.borderColor = 'var(--primary)';
-        }
-    }
-    unitSelector.addEventListener('change', updateUnitColor);
-    updateUnitColor();
 
     // Topic selector highlight on selection
     const topicSelector = document.getElementById('topicSelector');

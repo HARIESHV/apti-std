@@ -11,10 +11,12 @@
                     style="font-size: 0.7rem; vertical-align: middle; background: var(--accent); color: white; padding: 4px 10px; border-radius: 20px; margin-left: 10px; font-weight: 800; letter-spacing: 1px; box-shadow: 0 0 15px rgba(16, 185, 129, 0.3);">LIFETIME
                     MEMBER</span>
             </h1>
-            <p style="color: var(--text-dim); font-size: 1.1rem; max-width: 500px;">Your lifetime potential is
+            <p style="color: var(--text-dim); font-size: 1.1rem; max-width: 500px; margin-top: 0.5rem;">Your lifetime
+                potential is
                 limitless. All your progress is stored for eternity.</p>
         </div>
         <div style="display: flex; gap: 2.5rem; align-items: center;">
+
             <div style="text-align: center;">
                 <div style="font-size: 2rem; font-weight: 800; color: var(--primary);">{{ stats.correct }}</div>
                 <div style="font-size: 0.8rem; color: var(--text-dim); text-transform: uppercase; letter-spacing: 1px;">
@@ -29,13 +31,16 @@
             {% if classroom and classroom.is_live %}
             <div
                 style="border-left: 1px solid var(--glass-border); padding-left: 2.5rem; display: flex; align-items: center; gap: 1rem;">
-                <div class="live-indicator"></div>
-                <div>
-                    <div style="font-size: 0.75rem; color: #ef4444; font-weight: 800; text-transform: uppercase;">Live
-                        Now</div>
-                    <a href="{{ classroom.active_meet_link }}" target="_blank"
-                        style="color: var(--text-main); text-decoration: none; font-weight: 700; font-size: 0.9rem;">Join
-                        Classroom &rarr;</a>
+                <div style="display: flex; align-items: center; gap: 1rem;">
+                    <div class="live-indicator"></div>
+                    <div>
+                        <div style="font-size: 0.75rem; color: #ef4444; font-weight: 800; text-transform: uppercase;">
+                            Live
+                            Now</div>
+                        <a href="{{ classroom.active_meet_link }}" target="_blank"
+                            style="color: var(--text-main); text-decoration: none; font-weight: 700; font-size: 0.9rem;">Join
+                            Classroom &rarr;</a>
+                    </div>
                 </div>
             </div>
             {% endif %}
@@ -95,549 +100,487 @@
             </div>
         </div>
     </div>
+</div>
 
 
-    {% if active_meet_links %}
-    <div class="card"
-        style="margin-bottom: 3rem; background: rgba(99, 102, 241, 0.03); border-color: rgba(99, 102, 241, 0.1);">
-        <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem;">
-            <div
-                style="width: 32px; height: 32px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
-                <svg style="width:20px; height:20px" viewBox="0 0 24 24">
-                    <path fill="currentColor"
-                        d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M6,10V7H4V10H1V12H4V15H6V12H9V10M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12Z" />
-                </svg>
-            </div>
-            <h2 style="font-size: 1.25rem; font-weight: 700;">Ongoing Discussion Rooms</h2>
+{% if active_meet_links %}
+<div class="card"
+    style="margin-bottom: 3rem; background: rgba(99, 102, 241, 0.03); border-color: rgba(99, 102, 241, 0.1);">
+    <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem;">
+        <div
+            style="width: 32px; height: 32px; background: var(--primary); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white;">
+            <svg style="width:20px; height:20px" viewBox="0 0 24 24">
+                <path fill="currentColor"
+                    d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M6,10V7H4V10H1V12H4V15H6V12H9V10M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12Z" />
+            </svg>
         </div>
-        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem;">
-            {% for link in active_meet_links %}
-            <div class="glass-panel"
-                style="padding: 1.25rem; background: rgba(255, 255, 255, 0.02); display: flex; justify-content: space-between; align-items: center; transition: background 0.3s;">
-                <div>
-                    <div style="font-weight: 600; color: var(--text-main); margin-bottom: 4px;">{{ link.label }}</div>
-                    <div
-                        style="font-size: 0.75rem; color: var(--accent); font-weight: 700; display: flex; align-items: center; gap: 5px;">
-                        <div class="live-indicator"
-                            style="background: var(--accent); box-shadow: 0 0 8px var(--accent);">
-                        </div>
-                        LIVE NOW
-                    </div>
-                </div>
-                <a href="{{ link.url }}" target="_blank" class="btn btn-primary"
-                    style="padding: 0.5rem 1rem; font-size: 0.8rem;">Join</a>
-            </div>
-            {% endfor %}
-        </div>
+        <h2 style="font-size: 1.25rem; font-weight: 700;">Ongoing Discussion Rooms</h2>
     </div>
-    {% endif %}
-
-    <div style="display: grid; gap: 2.5rem;">
-        {% for q in questions %}
-        <div class="card animate-fade-in" style="margin-bottom: 0; position: relative;">
-            <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
-                <div style="display: flex; gap: 1.5rem;">
-                    <div
-                        style="width: 40px; height: 40px; background: rgba(255,255,255,0.05); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--primary); flex-shrink: 0;">
-                        Q{{ loop.index }}
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1.25rem;">
+        {% for link in active_meet_links %}
+        <div class="glass-panel"
+            style="padding: 1.25rem; background: rgba(255, 255, 255, 0.02); display: flex; justify-content: space-between; align-items: center; transition: background 0.3s;">
+            <div>
+                <div style="font-weight: 600; color: var(--text-main); margin-bottom: 4px;">{{ link.label }}</div>
+                <div
+                    style="font-size: 0.75rem; color: var(--accent); font-weight: 700; display: flex; align-items: center; gap: 5px;">
+                    <div class="live-indicator" style="background: var(--accent); box-shadow: 0 0 8px var(--accent);">
                     </div>
-                    <div style="display: flex; flex-direction: column; gap: 0.5rem;">
-                        {% if q.topic %}
-                        <span
-                            style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); font-weight: 700;">{{
-                            q.topic }}</span>
-                        {% endif %}
-                        <h3
-                            style="font-weight: 600; font-size: 1.3rem; line-height: 1.5; color: var(--text-main); margin: 0;">
-                            {{ q.text }}
-                        </h3>
-                    </div>
+                    LIVE NOW
                 </div>
+            </div>
+            <a href="{{ link.url }}" target="_blank" class="btn btn-primary"
+                style="padding: 0.5rem 1rem; font-size: 0.8rem;">Join</a>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
 
-                {% if q.id in user_answers %}
-                {% set ans = user_answers[q.id] %}
-                <div class="submission-status {{ 'correct' if ans.is_correct else 'incorrect' }}"
-                    style="{% if ans.is_expired %}background: rgba(239, 68, 68, 0.1); color: var(--danger); border-color: rgba(239, 68, 68, 0.2);{% endif %}">
-                    {% if ans.is_expired %}
-                    EXPIRED
-                    {% else %}
-                    {{ 'Correct' if ans.is_correct else 'Incorrect' }}
+<div style="display: grid; gap: 2.5rem;">
+    {% for q in questions %}
+    <div class="card animate-fade-in" style="margin-bottom: 0; position: relative;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 2rem;">
+            <div style="display: flex; gap: 1.5rem;">
+                <div
+                    style="width: 40px; height: 40px; background: rgba(255,255,255,0.05); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 800; color: var(--primary); flex-shrink: 0;">
+                    Q{{ loop.index }}
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 0.5rem;">
+                    {% if q.topic %}
+                    <span
+                        style="font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--primary); font-weight: 700;">{{
+                        q.topic }}</span>
                     {% endif %}
+                    <h3
+                        style="font-weight: 600; font-size: 1.3rem; line-height: 1.5; color: var(--text-main); margin: 0;">
+                        {{ q.text }}
+                    </h3>
                 </div>
+            </div>
+
+            {% if q.id in user_answers %}
+            {% set ans = user_answers[q.id] %}
+            <div class="submission-status {{ 'correct' if ans.is_correct else 'incorrect' }}"
+                style="{% if ans.is_expired %}background: rgba(239, 68, 68, 0.1); color: var(--danger); border-color: rgba(239, 68, 68, 0.2);{% endif %}">
+                {% if ans.is_expired %}
+                EXPIRED
                 {% else %}
-                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
-                    <div class="timer-display" data-limit-mins="{{ q.time_limit if q.time_limit else 0 }}"
-                        id="timer-{{ q.id }}"
-                        style="display: flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; background: rgba(99, 102, 241, 0.1); color: var(--primary);">
-                        <svg style="width:16px; height:16px" viewBox="0 0 24 24">
-                            <path fill="currentColor"
-                                d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
-                        </svg>
-                        <span class="time-left">Loading...</span>
-                    </div>
-                    {% if q.time_limit and q.time_limit > 0 %}
-                    <span style="font-size: 0.7rem; color: var(--text-dim);">
-                        Limit:
-                        {% if q.time_limit >= 1440 %} {{ (q.time_limit / 1440) | round(1) }} days
-                        {% elif q.time_limit >= 60 %} {{ (q.time_limit / 60) | round(1) }} hours
-                        {% else %} {{ q.time_limit }} min {% endif %}
-                    </span>
-                    {% else %}
-                    <span style="font-size: 0.7rem; color: var(--accent); font-weight: 600;">Lifetime Access</span>
-                    {% endif %}
-                </div>
+                Solved – {{ 'Correct' if ans.is_correct else 'Incorrect' }}
                 {% endif %}
             </div>
+            {% else %}
+            <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                <div class="timer-display"
+                    data-limit-total-sec="{{ (q.timer_days * 86400) + (q.timer_hours * 3600) + (q.timer_minutes * 60) + q.timer_seconds if (q.timer_days or q.timer_hours or q.timer_minutes or q.timer_seconds) else (q.time_limit * 60 if q.time_limit else 0) }}"
+                    data-timer-format="{{ q.timer_display_format or 'days' }}" id="timer-{{ q.id }}"
+                    style="display: flex; align-items: center; gap: 8px; padding: 6px 16px; border-radius: 20px; font-size: 0.85rem; font-weight: 700; background: rgba(99, 102, 241, 0.1); color: var(--primary);">
+                    <svg style="width:16px; height:16px" viewBox="0 0 24 24">
+                        <path fill="currentColor"
+                            d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+                    </svg>
+                    <span class="time-left">Loading...</span>
+                </div>
+            </div>
+            {% endif %}
+        </div>
 
-            {% if q.id not in user_answers %}
-            <div style="position: relative;">
-                <div id="content-{{ q.id }}" style="transition: all 0.5s ease; filter: blur(8px);">
-                    {% if q.image_file %}
-                    <div style="margin-bottom: 2rem;">
-                        <img src="{{ url_for('serve_question_image', question_id=q.id) }}" alt="Question Diagram"
-                            style="max-width: 100%; max-height: 400px; border-radius: 12px; border: 1px solid var(--glass-border); display: block;">
+        {% if q.id not in user_answers %}
+        <div style="position: relative;">
+            <div id="content-{{ q.id }}" style="transition: all 0.5s ease; filter: blur(8px);">
+                {% if q.image_file %}
+                <div style="margin-bottom: 2rem;">
+                    <img src="{{ url_for('serve_question_image', question_id=q.id) }}" alt="Question Diagram"
+                        style="max-width: 100%; max-height: 400px; border-radius: 12px; border: 1px solid var(--glass-border); display: block;">
+                </div>
+                {% endif %}
+
+                <form action="{{ url_for('submit_answer') }}" method="POST" enctype="multipart/form-data">
+                    <input type="hidden" name="question_id" value="{{ q.id }}">
+                    <div
+                        style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
+                        {% for label, text in [('A', q.option_a), ('B', q.option_b), ('C', q.option_c), ('D',
+                        q.option_d)] %}
+                        <label class="option-container">
+                            <input type="radio" name="selected_option" value="{{ label }}">
+                            <div class="option-box">
+                                <span style="font-weight: 800; margin-right: 10px; color: var(--primary);">{{ label
+                                    }}</span>
+                                {{ text }}
+                            </div>
+                        </label>
+                        {% endfor %}
                     </div>
-                    {% endif %}
 
-                    <form action="{{ url_for('submit_answer') }}" method="POST" enctype="multipart/form-data">
-                        <input type="hidden" name="question_id" value="{{ q.id }}">
-                        <div
-                            style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
-                            {% for label, text in [('A', q.option_a), ('B', q.option_b), ('C', q.option_c), ('D',
-                            q.option_d)] %}
-                            <label class="option-container">
-                                <input type="radio" name="selected_option" value="{{ label }}">
-                                <div class="option-box">
-                                    <span style="font-weight: 800; margin-right: 10px; color: var(--primary);">{{ label
-                                        }}</span>
-                                    {{ text }}
-                                </div>
-                            </label>
-                            {% endfor %}
-                        </div>
-
-                        <div
-                            style="background: rgba(255,255,255,0.02); border: 1px dashed var(--glass-border); padding: 1.5rem; border-radius: 1rem; margin-bottom: 2rem;">
+                    <div
+                        style="background: rgba(255,255,255,0.02); border: 1px solid var(--glass-border); padding: 1.5rem; border-radius: 1rem; margin-bottom: 2rem;">
+                        <!-- File Upload Field (Image Only) -->
+                        <div>
                             <label
-                                style="display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 600;">
+                                style="display: flex; align-items: center; gap: 10px; margin-bottom: 0.75rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 600;">
                                 <svg style="width:20px; height:20px" viewBox="0 0 24 24">
                                     <path fill="currentColor"
                                         d="M14,2L20,8V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V4A2,2 0 0,1 6,2H14M13,3.5V9H18.5L13,3.5M7,11V13H17V11H7M7,15V17H14V15H7Z" />
                                 </svg>
-                                Upload Detailed Solution (Optional)
+                                Upload Solution Image
                             </label>
-                            <input type="file" name="file" accept=".pdf,.docx,.jpg,.png">
+                            <input type="file" name="file" id="file-{{ q.id }}" accept=".jpg,.png,.jpeg"
+                                style="width: 100%;">
                         </div>
-
-                        <div style="display: flex; justify-content: space-between; align-items: center;">
-                            {% if q.meet_link %}
-                            <a href="{{ q.meet_link }}" target="_blank" class="meet-btn">
-                                <svg style="width:20px; height:20px" viewBox="0 0 24 24">
-                                    <path fill="currentColor"
-                                        d="M17,10.5V7A1,1 0 0,0 16,6H4A1,1 0 0,0 3,7V17A1,1 0 0,0 4,18H16A1,1 0 0,0 17,17V13.5L21,17.5V6.5L17,10.5Z" />
-                                </svg>
-                                Join Discussion
-                            </a>
-                            {% else %}
-                            <div></div>
-                            {% endif %}
-                            <button type="submit" class="btn btn-primary" id="btn-{{ q.id }}">Submit My
-                                Response</button>
-                        </div>
-                    </form>
-                </div>
-
-                {% if q.time_limit and q.time_limit > 0 %}
-                <div id="overlay-{{ q.id }}"
-                    style="position: absolute; inset: 0; background: rgba(7, 9, 14, 0.4); backdrop-filter: blur(4px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; border-radius: 1.5rem; gap: 1.5rem;">
-                    <div style="text-align: center; max-width: 300px;">
-                        <div
-                            style="width: 60px; height: 60px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: white; box-shadow: 0 0 30px rgba(99, 102, 241, 0.4);">
-                            <svg style="width:32px; height:32px" viewBox="0 0 24 24">
-                                <path fill="currentColor"
-                                    d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
-                            </svg>
-                        </div>
-                        <h4 style="color: white; font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem;">Ready to
-                            begin?</h4>
-                        <p style="color: rgba(255,255,255,0.7); font-size: 0.85rem; margin-bottom: 1.5rem;">The {{
-                            q.time_limit }} minute timer will start once you click below.</p>
-                        <button onclick="startQuestion('{{ q.id }}', {{ q.time_limit or 0 }})" class="btn btn-primary"
-                            style="width: 100%; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);">Start Attempt</button>
                     </div>
-                </div>
-                {% endif %}
+
+                    <div style="display: flex; justify-content: flex-end; align-items: center;">
+                        <button type="submit" class="btn btn-primary" id="btn-{{ q.id }}">Submit My Response</button>
+                    </div>
+                </form>
             </div>
-            {% else %}
-            <div style="border-top: 1px solid var(--glass-border); padding-top: 1.5rem;">
-                {% set ans = user_answers[q.id] %}
-                <div class="glass-panel" style="padding: 1.5rem; background: rgba(255, 255, 255, 0.01);">
-                    <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.95rem;">
-                        <div style="display: flex; justify-content: space-between; align-items: baseline;">
-                            <span style="color: var(--text-dim);">Your Answer:
-                                <strong style="color: var(--text-main);">
-                                    {% if ans.selected_option == 'A' %}{{ q.option_a }}
-                                    {% elif ans.selected_option == 'B' %}{{ q.option_b }}
-                                    {% elif ans.selected_option == 'C' %}{{ q.option_c }}
-                                    {% elif ans.selected_option == 'D' %}{{ q.option_d }}
-                                    {% else %}File Upload{% endif %}
-                                </strong>
-                                {% if ans.selected_option %}({{ ans.selected_option }}){% endif %}
-                            </span>
-                            <span style="color: var(--accent); font-weight: 700; text-align: right;">
-                                Correct:
-                                {% if q.correct_answer == 'A' %}{{ q.option_a }}
-                                {% elif q.correct_answer == 'B' %}{{ q.option_b }}
-                                {% elif q.correct_answer == 'C' %}{{ q.option_c }}
-                                {% elif q.correct_answer == 'D' %}{{ q.option_d }}
-                                {% endif %}
-                                ({{ q.correct_answer }})
-                            </span>
-                        </div>
-                    </div>
-                    {% if q.explanation %}
-                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
-                        <strong
-                            style="color: var(--primary); display: block; margin-bottom: 0.5rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Explanation</strong>
-                        <p style="color: var(--text-dim); line-height: 1.6; margin: 0;">{{ q.explanation }}</p>
-                    </div>
-                    {% endif %}
-                </div>
 
-                {% if q.meet_link %}
-                <div style="margin-top: 1.5rem;">
-                    <a href="{{ q.meet_link }}" target="_blank"
-                        style="color: var(--primary); text-decoration: none; display: flex; align-items: center; gap: 8px; font-size: 0.95rem; font-weight: 600;">
-                        Join the post-submission review session &rarr;
-                    </a>
+            {% set total_q_sec = (q.timer_days * 86400) + (q.timer_hours * 3600) + (q.timer_minutes * 60) +
+            q.timer_seconds %}
+            {% if (total_q_sec > 0 or (q.time_limit and q.time_limit > 0)) %}
+            <div id="overlay-{{ q.id }}"
+                style="position: absolute; inset: 0; background: rgba(7, 9, 14, 0.4); backdrop-filter: blur(4px); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; border-radius: 1.5rem; gap: 1.5rem;">
+                <div style="text-align: center; max-width: 300px;">
+                    <div
+                        style="width: 60px; height: 60px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; color: white; box-shadow: 0 0 30px rgba(99, 102, 241, 0.4);">
+                        <svg style="width:32px; height:32px" viewBox="0 0 24 24">
+                            <path fill="currentColor"
+                                d="M12,20A8,8 0 0,0 20,12A8,8 0 0,0 12,4A8,8 0 0,0 4,12A8,8 0 0,0 12,20M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22C6.47,22 2,17.5 2,12A10,10 0 0,1 12,2M12.5,7V12.25L17,14.92L16.25,16.15L11,13V7H12.5Z" />
+                        </svg>
+                    </div>
+                    <h4 style="color: white; font-weight: 700; font-size: 1.1rem; margin-bottom: 0.5rem;">Ready to
+                        begin?</h4>
+                    <p style="color: rgba(255,255,255,0.7); font-size: 0.85rem; margin-bottom: 1.5rem;">
+                        The timer will start once you click below.
+                    </p>
+                    <button onclick="startQuestion('{{ q.id }}')" class="btn btn-primary"
+                        style="width: 100%; box-shadow: 0 4px 20px rgba(99, 102, 241, 0.4);">Start Attempt</button>
                 </div>
-                {% endif %}
             </div>
             {% endif %}
         </div>
-        {% endfor %}
+        {% else %}
+        <div style="border-top: 1px solid var(--glass-border); padding-top: 1.5rem;">
+            {% set ans = user_answers[q.id] %}
+            <div class="glass-panel" style="padding: 1.5rem; background: rgba(255, 255, 255, 0.01);">
+                <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.95rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: baseline;">
+                        <span style="color: var(--text-dim);">Your Answer:
+                            <strong style="color: var(--text-main);">
+                                {% if ans.selected_option == 'A' %}{{ q.option_a }}
+                                {% elif ans.selected_option == 'B' %}{{ q.option_b }}
+                                {% elif ans.selected_option == 'C' %}{{ q.option_c }}
+                                {% elif ans.selected_option == 'D' %}{{ q.option_d }}
+                                {% else %}Detailed Response{% endif %}
+                            </strong>
+                            {% if ans.selected_option %}({{ ans.selected_option }}){% endif %}
+                        </span>
+                        <span style="color: var(--accent); font-weight: 700; text-align: right;">
+                            Correct:
+                            {% if q.correct_answer == 'A' %}{{ q.option_a }}
+                            {% elif q.correct_answer == 'B' %}{{ q.option_b }}
+                            {% elif q.correct_answer == 'C' %}{{ q.option_c }}
+                            {% elif q.correct_answer == 'D' %}{{ q.option_d }}
+                            {% endif %}
+                            ({{ q.correct_answer }})
+                        </span>
+                    </div>
 
-        {% if not questions %}
-        <div class="card"
-            style="text-align: center; padding: 6rem 0; border: 2px dashed var(--glass-border); background: transparent;">
-            <div
-                style="width: 80px; height: 80px; background: var(--glass-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; color: var(--text-dim);">
-                <svg style="width:40px; height:40px" viewBox="0 0 24 24">
-                    <path fill="currentColor"
-                        d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z" />
-                </svg>
+
+
+                    {% if ans.file_data or ans.file_path %}
+                    <div style="margin-top: 0.5rem;">
+                        <a href="{{ url_for('serve_submission_file', answer_id=ans.id) }}" target="_blank"
+                            style="display: inline-flex; align-items: center; gap: 8px; padding: 0.6rem 1.25rem; background: rgba(99, 102, 241, 0.1); color: var(--primary); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 10px; font-size: 0.85rem; font-weight: 700; text-decoration: none; transition: all 0.3s;"
+                            onmouseover="this.style.background='rgba(99,102,241,0.2)'"
+                            onmouseout="this.style.background='rgba(99,102,241,0.1)'">
+                            <svg style="width:18px; height:18px" viewBox="0 0 24 24">
+                                <path fill="currentColor"
+                                    d="M14,2L20,8V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V4A2,2 0 0,1 6,2H14M13,3.5V9H18.5L13,3.5M7,11V13H17V11H7M7,15V17H14V15H7Z" />
+                            </svg>
+                            View Submitted Artifact
+                        </a>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if q.explanation %}
+                <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.05);">
+                    <strong
+                        style="color: var(--primary); display: block; margin-bottom: 0.5rem; font-size: 0.85rem; text-transform: uppercase; letter-spacing: 1px;">Explanation</strong>
+                    <p style="color: var(--text-dim); line-height: 1.6; margin: 0;">{{ q.explanation }}</p>
+                </div>
+                {% endif %}
             </div>
-            <h2 style="color: var(--text-main); font-weight: 700;">No questions available yet</h2>
-            <p style="color: var(--text-dim);">Stay tuned! New challenges will appear here soon.</p>
+
+
         </div>
         {% endif %}
     </div>
-    {% endblock %}
+    {% endfor %}
 
-    {% block extra_css %}
-    <style>
-        .option-container {
-            cursor: pointer;
-            display: block;
-        }
+    {% if not questions %}
+    <div class="card"
+        style="text-align: center; padding: 6rem 0; border: 2px dashed var(--glass-border); background: transparent;">
+        <div
+            style="width: 80px; height: 80px; background: var(--glass-bg); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 2rem; color: var(--text-dim);">
+            <svg style="width:40px; height:40px" viewBox="0 0 24 24">
+                <path fill="currentColor"
+                    d="M11,9H13V7H11M12,20C7.59,20 4,16.41 4,12C4,7.59 7.59,4 12,4C16.41,4 20,7.59 20,12C20,16.41 16.41,20 12,20M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M11,17H13V11H11V17Z" />
+            </svg>
+        </div>
+        <h2 style="color: var(--text-main); font-weight: 700;">No questions available yet</h2>
+        <p style="color: var(--text-dim);">Stay tuned! New challenges will appear here soon.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
 
-        .option-container input {
-            display: none;
-        }
+{% block extra_css %}
+<style>
+    .option-container {
+        cursor: pointer;
+        display: block;
+    }
 
-        .option-box {
-            padding: 1.25rem;
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid var(--glass-border);
-            border-radius: 1rem;
-            transition: all 0.3s ease;
-            color: var(--text-dim);
-            font-weight: 500;
-            height: 100%;
-        }
+    .option-container input {
+        display: none;
+    }
 
-        .option-container input:checked+.option-box {
-            background: rgba(99, 102, 241, 0.1);
-            border-color: var(--primary);
-            color: var(--text-main);
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
-            transform: scale(1.02);
-        }
+    .option-box {
+        padding: 1.25rem;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid var(--glass-border);
+        border-radius: 1rem;
+        transition: all 0.3s ease;
+        color: var(--text-dim);
+        font-weight: 500;
+        height: 100%;
+    }
 
-        .option-box:hover:not(input:checked + .option-box) {
-            background: rgba(255, 255, 255, 0.06);
-            border-color: rgba(255, 255, 255, 0.2);
-        }
+    .option-container input:checked+.option-box {
+        background: rgba(99, 102, 241, 0.1);
+        border-color: var(--primary);
+        color: var(--text-main);
+        box-shadow: 0 0 20px rgba(99, 102, 241, 0.15);
+        transform: scale(1.02);
+    }
 
-        .meet-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.75rem;
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--accent);
-            padding: 0.8rem 1.5rem;
-            border-radius: 0.75rem;
-            text-decoration: none;
-            font-weight: 700;
-            transition: all 0.3s;
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            font-size: 0.9rem;
-        }
+    .option-box:hover:not(input:checked + .option-box) {
+        background: rgba(255, 255, 255, 0.06);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
 
-        .meet-btn:hover {
-            background: rgba(16, 185, 129, 0.2);
-            transform: translateY(-2px);
-        }
+    .meet-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.75rem;
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--accent);
+        padding: 0.8rem 1.5rem;
+        border-radius: 0.75rem;
+        text-decoration: none;
+        font-weight: 700;
+        transition: all 0.3s;
+        border: 1px solid rgba(16, 185, 129, 0.2);
+        font-size: 0.9rem;
+    }
 
-        .submission-status {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 6px 16px;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 700;
-        }
+    .meet-btn:hover {
+        background: rgba(16, 185, 129, 0.2);
+        transform: translateY(-2px);
+    }
 
-        .submission-status.correct {
-            background: rgba(16, 185, 129, 0.1);
-            color: var(--accent);
-        }
+    .submission-status {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 700;
+    }
 
-        .submission-status.incorrect {
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--danger);
-        }
+    .submission-status.correct {
+        background: rgba(16, 185, 129, 0.1);
+        color: var(--accent);
+    }
 
-        input[type="file"] {
-            color: var(--text-dim);
-            font-size: 0.9rem;
-        }
+    .submission-status.incorrect {
+        background: rgba(239, 68, 68, 0.1);
+        color: var(--danger);
+    }
 
-        input[type="file"]::file-selector-button {
-            background: var(--glass-bg);
-            border: 1px solid var(--glass-border);
-            padding: 0.5rem 1rem;
-            border-radius: 0.5rem;
-            color: var(--text-main);
-            cursor: pointer;
-            margin-right: 1rem;
-            transition: all 0.3s;
-        }
+    input[type="file"] {
+        color: var(--text-dim);
+        font-size: 0.9rem;
+    }
 
-        input[type="file"]::file-selector-button:hover {
-            background: rgba(255, 255, 255, 0.1);
-        }
-    </style>
-    {% endblock %}
+    input[type="file"]::file-selector-button {
+        background: var(--glass-bg);
+        border: 1px solid var(--glass-border);
+        padding: 0.5rem 1rem;
+        border-radius: 0.5rem;
+        color: var(--text-main);
+        cursor: pointer;
+        margin-right: 1rem;
+        transition: all 0.3s;
+    }
 
-    {% block extra_js %}
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        // User-specific ID for separate timers per member
-        const CURRENT_USER_ID = "{{ current_user.id }}";
-        const SERVER_NOW = {{ server_now | default (0) }};
-        const LOCAL_NOW_WHEN_LOADED = new Date().getTime();
-        const CLOCK_OFFSET = SERVER_NOW ? (SERVER_NOW - LOCAL_NOW_WHEN_LOADED) : 0;
-        const USER_ATTEMPTS = {{ user_attempts | tojson }};
+    input[type="file"]::file-selector-button:hover {
+        background: rgba(255, 255, 255, 0.1);
+    }
+</style>
+{% endblock %}
 
-        document.addEventListener('DOMContentLoaded', function () {
-            const dashboardStats = {{ stats | tojson
-        }};
-        const chartOptions = {
-            cutout: '75%',
-            responsive: true,
-            maintainAspectRatio: true,
-            plugins: {
-                legend: { display: false },
-                tooltip: { enabled: true }
-            }
-        };
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const CURRENT_USER_ID = "{{ current_user.id }}";
+    const SERVER_NOW = {{ server_now or 0 }};
+    const LOCAL_NOW_WHEN_LOADED = new Date().getTime();
+    const CLOCK_OFFSET = SERVER_NOW ? (SERVER_NOW - LOCAL_NOW_WHEN_LOADED) : 0;
+    const USER_ATTEMPTS = {{ user_attempts | default ({}) | tojson }};
 
-        const todayCtx = document.getElementById('todayChart')?.getContext('2d');
-        if (todayCtx) {
-            new Chart(todayCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Solved', 'Remaining'],
-                    datasets: [{
-                        data: [dashboardStats.today_solved, dashboardStats.today_remaining],
-                        backgroundColor: ['#6366f1', 'rgba(255, 255, 255, 0.05)'],
-                        borderWidth: 0,
-                        hoverOffset: 4
-                    }]
-                },
-                options: chartOptions
-            });
-        }
+    document.addEventListener('DOMContentLoaded', function () {
+        const dashboardStats = {{ stats | default ({}) | tojson
+    }};
 
-        const accuracyCtx = document.getElementById('accuracyChart')?.getContext('2d');
-        if (accuracyCtx) {
-            new Chart(accuracyCtx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Correct', 'Incorrect'],
-                    datasets: [{
-                        data: [dashboardStats.correct, dashboardStats.incorrect],
-                        backgroundColor: ['#10b981', '#ef4444'],
-                        borderWidth: 0,
-                        hoverOffset: 4
-                    }]
-                },
-                options: chartOptions
-            });
-        }
 
-        const historyCanvas = document.getElementById('historyChart');
-        if (historyCanvas) {
-            const historyLabels = JSON.parse(historyCanvas.dataset.labels);
-            const historyAccuracy = JSON.parse(historyCanvas.dataset.accuracy);
+    const todayCtx = document.getElementById('todayChart');
+    if (todayCtx) {
+        new Chart(todayCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Solved', 'Remaining'],
+                datasets: [{
+                    data: [dashboardStats.today_solved || 0, dashboardStats.today_remaining || 0],
+                    backgroundColor: ['#6366f1', 'rgba(255, 255, 255, 0.05)'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: { cutout: '75%', responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } }
+        });
+    }
 
-            new Chart(historyCanvas.getContext('2d'), {
-                type: 'line',
-                data: {
-                    labels: historyLabels,
-                    datasets: [{
-                        label: 'Accuracy %',
-                        data: historyAccuracy,
-                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                        borderColor: '#6366f1',
-                        borderWidth: 3,
-                        tension: 0.4,
-                        fill: true,
-                        pointBackgroundColor: '#6366f1'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { display: false },
-                        tooltip: {
-                            callbacks: {
-                                label: function (context) {
-                                    return context.parsed.y + '% Accuracy';
-                                }
-                            }
-                        }
-                    },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            max: 100,
-                            grid: { color: 'rgba(255,255,255,0.05)' },
-                            ticks: {
-                                color: 'rgba(255,255,255,0.5)',
-                                callback: function (value) { return value + "%"; }
-                            }
-                        },
-                        x: {
-                            grid: { display: false },
-                            ticks: { color: 'rgba(255,255,255,0.5)' }
-                        }
-                    }
-                }
-            });
-        }
+    const accuracyCtx = document.getElementById('accuracyChart');
+    if (accuracyCtx) {
+        new Chart(accuracyCtx.getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Correct', 'Incorrect'],
+                datasets: [{
+                    data: [dashboardStats.correct || 0, dashboardStats.incorrect || 0],
+                    backgroundColor: ['#10b981', '#ef4444'],
+                    borderWidth: 0,
+                    hoverOffset: 4
+                }]
+            },
+            options: { cutout: '75%', responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } } }
+        });
+    }
 
-        // Sync server attempts to localStorage
-        for (const [qId, startTime] of Object.entries(USER_ATTEMPTS)) {
-            localStorage.setItem(`start_time_${CURRENT_USER_ID}_${qId}`, startTime);
-        }
+    // Sync attempts
+    for (const [qId, startTime] of Object.entries(USER_ATTEMPTS)) {
+        localStorage.setItem(`start_time_${CURRENT_USER_ID}_${qId}`, startTime);
+    }
 
-        updateTimers();
-        setInterval(updateTimers, 1000);
+    updateTimers();
+    setInterval(updateTimers, 1000);
+
     });
 
-        async function startQuestion(qId, limitMins) {
-            if (!qId) return;
-            try {
-                const response = await fetch('/student/start_attempt', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ question_id: qId })
-                });
-                const data = await response.json();
-                if (data.start_time) {
-                    localStorage.setItem(`start_time_${CURRENT_USER_ID}_${qId}`, data.start_time);
-                }
-            } catch (err) {
-                console.error("Failed to sync start time:", err);
-                localStorage.setItem(`start_time_${CURRENT_USER_ID}_${qId}`, new Date().getTime() + CLOCK_OFFSET);
+
+
+
+    async function startQuestion(qId) {
+        if (!qId) return;
+        try {
+            const response = await fetch('/student/start_attempt', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ question_id: qId })
+            });
+            const data = await response.json();
+            if (data.start_time) {
+                localStorage.setItem(`start_time_${CURRENT_USER_ID}_${qId}`, data.start_time);
             }
-            updateTimers();
+        } catch (err) {
+            console.error(err);
         }
+        updateTimers();
+    }
 
-        function updateTimers() {
-            const now = new Date().getTime() + CLOCK_OFFSET;
-            const timers = document.querySelectorAll('.timer-display');
-            const GRACE_PERIOD_MS = 2000;
+    function updateTimers() {
+        const now = new Date().getTime() + CLOCK_OFFSET;
+        const timers = document.querySelectorAll('.timer-display');
+        const GRACE_PERIOD_MS = 2000;
 
-            timers.forEach(timer => {
-                const qId = timer.id.split('-')[1];
-                if (!qId) return;
+        timers.forEach(timer => {
+            const qId = timer.id.split('-')[1];
+            const startTime = localStorage.getItem(`start_time_${CURRENT_USER_ID}_${qId}`);
+            const limitTotalSec = parseFloat(timer.getAttribute('data-limit-total-sec') || "0");
+            const timeSpan = timer.querySelector('.time-left');
+            const parentCard = timer.closest('.card');
+            const submitBtn = parentCard?.querySelector('button[type="submit"]');
+            const overlay = document.getElementById(`overlay-${qId}`);
+            const content = document.getElementById(`content-${qId}`);
 
-                const startTime = localStorage.getItem(`start_time_${CURRENT_USER_ID}_${qId}`);
-                const limitMins = parseFloat(timer.getAttribute('data-limit-mins') || "0");
-                const timeSpan = timer.querySelector('.time-left');
-                const parentCard = timer.closest('.card');
-                const submitBtn = parentCard?.querySelector('button[type="submit"]');
-                const overlay = document.getElementById(`overlay-${qId}`);
-                const content = document.getElementById(`content-${qId}`);
-
-                if (limitMins <= 0) {
-                    timeSpan.innerHTML = "∞ Lifetime";
-                    if (overlay) overlay.style.display = 'none';
-                    if (content) content.style.filter = 'none';
-                    return;
-                }
-
-                if (!startTime) {
-                    timeSpan.innerHTML = "Not Started";
-                    if (overlay) overlay.style.display = 'flex';
-                    if (content) content.style.filter = 'blur(8px)';
-                    return;
-                }
-
+            if (limitTotalSec <= 0) {
+                timeSpan.innerHTML = "∞ Lifetime";
                 if (overlay) overlay.style.display = 'none';
                 if (content) content.style.filter = 'none';
+                return;
+            }
 
-                const endTime = parseInt(startTime) + (limitMins * 60 * 1000);
-                const distance = endTime - now;
+            if (!startTime) {
+                timeSpan.innerHTML = "Not Started";
+                if (overlay) overlay.style.display = 'flex';
+                if (content) content.style.filter = 'blur(8px)';
+                return;
+            }
 
-                if (distance < -GRACE_PERIOD_MS) {
-                    timeSpan.innerHTML = "EXPIRED";
-                    if (timer) {
-                        timer.style.background = "rgba(239, 68, 68, 0.1)";
-                        timer.style.color = "var(--danger)";
-                    }
-                    if (submitBtn && !submitBtn.getAttribute('data-expired-triggered')) {
-                        submitBtn.innerHTML = "Time Expired - Submit Late";
-                        submitBtn.classList.remove('btn-primary');
-                        submitBtn.style.background = "rgba(239, 68, 68, 0.2)";
-                        submitBtn.style.color = "var(--danger)";
-                        submitBtn.setAttribute('data-expired-triggered', 'true');
-                    }
+            if (overlay) overlay.style.display = 'none';
+            if (content) content.style.filter = 'none';
+
+            const endTime = parseInt(startTime) + (limitTotalSec * 1000);
+            const distance = endTime - now;
+
+            if (distance < -GRACE_PERIOD_MS) {
+                timeSpan.innerHTML = "EXPIRED";
+                timer.style.color = "var(--danger)";
+                if (submitBtn) submitBtn.innerHTML = "Late Submission";
+            } else {
+                const adjDist = Math.max(0, distance);
+                const format = timer.getAttribute('data-timer-format') || 'days';
+                const pad = (n) => n.toString().padStart(2, '0');
+
+                let timeStr = "";
+                if (format === 'hours') {
+                    const totalH = Math.floor(adjDist / (1000 * 60 * 60));
+                    const m = Math.floor((adjDist % (1000 * 60 * 60)) / (1000 * 60));
+                    const s = Math.floor((adjDist % (1000 * 60)) / 1000);
+                    timeStr = (totalH > 0 ? totalH + "h " : "") + pad(m) + ":" + pad(s);
                 } else {
-                    const adjDist = Math.max(0, distance);
+                    const d = Math.floor(adjDist / (1000 * 60 * 60 * 24));
                     const h = Math.floor((adjDist % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
                     const m = Math.floor((adjDist % (1000 * 60 * 60)) / (1000 * 60));
                     const s = Math.floor((adjDist % (1000 * 60)) / 1000);
-
-                    let dStr = "";
-                    if (h > 0) dStr += h + "h ";
-                    dStr += m + "m " + s + "s";
-                    timeSpan.innerHTML = dStr;
-
-                    if (adjDist < 60000) {
-                        timer.style.color = "#f59e0b";
-                        timer.style.background = "rgba(245, 158, 11, 0.1)";
+                    if (d > 0) {
+                        timeStr = d + "d " + h + "h " + pad(m) + ":" + pad(s);
                     } else {
-                        timer.style.color = "var(--primary)";
-                        timer.style.background = "rgba(99, 102, 241, 0.1)";
+                        timeStr = (h > 0 ? h + "h " : "") + pad(m) + ":" + pad(s);
                     }
                 }
-            });
-        }
-    </script>
-    {% endblock %}
+                timeSpan.innerHTML = timeStr;
+
+                if (adjDist < 60000) {
+                    timer.style.color = "#f59e0b";
+                } else {
+                    timer.style.color = "var(--primary)";
+                }
+            }
+        });
+    }
+</script>
+{% endblock %}

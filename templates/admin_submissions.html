@@ -74,12 +74,13 @@
                     <td style="padding: 1.5rem; max-width: 350px;">
                         <div
                             style="font-size: 0.95rem; color: var(--text-main); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
-                            {{ r.question.text if r.question else 'Deleted Question' }}
+                            {{ (r.question.text if r.question else 'Deleted Question') | truncate(60) }}
                         </div>
                     </td>
                     <td style="padding: 1.5rem;">
-                        <span class="status-badge {{ 'correct' if r.is_correct else 'incorrect' }}">
-                            {{ 'PASS' if r.is_correct else 'FAIL' }}
+                        <span class="status-badge {{ 'correct' if r.is_correct else 'incorrect' }}"
+                            style="display: block; width: fit-content; margin-top: 4px;">
+                            Answer Submitted — {{ 'CORRECT' if r.is_correct else 'INCORRECT' }}
                         </span>
                     </td>
                     <td style="padding: 1.5rem;">
@@ -88,8 +89,14 @@
                             style="color: var(--primary); background: rgba(99, 102, 241, 0.1); padding: 0.5rem 1rem; font-size: 0.8rem; border: 1px solid rgba(99, 102, 241, 0.2);">
                             View Document
                         </a>
+                        {% elif r.text_response %}
+                        <div style="font-size: 0.85rem; color: var(--text-main); background: rgba(255,255,255,0.03); padding: 0.75rem; border-radius: 6px; border: 1px solid var(--glass-border); max-width: 250px; cursor: help;"
+                            title="{{ r.text_response }}">
+                            {{ r.text_response | truncate(80) }}
+                        </div>
                         {% else %}
-                        <span style="color: var(--text-dim); font-style: italic; font-size: 0.85rem;">None</span>
+                        <span style="color: var(--text-dim); font-style: italic; font-size: 0.85rem;">Option Selected:
+                            {{ r.selected_option }}</span>
                         {% endif %}
                     </td>
                     <td style="padding: 1.5rem; font-size: 0.85rem; color: var(--text-dim);">

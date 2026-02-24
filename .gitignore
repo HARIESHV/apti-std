@@ -11,3 +11,4 @@ instance/
 .env
 uploads/
 *.log
+backups/

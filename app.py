@@ -101,7 +101,12 @@ class Question(db.Model):
     correct_answer = db.Column(db.String(1))
     explanation = db.Column(db.Text)
     meet_link = db.Column(db.String(500))
-    time_limit = db.Column(db.Integer, default=10) # minutes
+    time_limit = db.Column(db.Integer, default=10) # Fallback / Minutes
+    timer_days = db.Column(db.Integer, default=0)
+    timer_hours = db.Column(db.Integer, default=0)
+    timer_minutes = db.Column(db.Integer, default=0)
+    timer_seconds = db.Column(db.Integer, default=0)
+    timer_display_format = db.Column(db.String(20), default='days') # 'days' or 'hours'
     image_file = db.Column(db.String(100))
     image_data = db.Column(db.LargeBinary) # Store in DB
     image_mimetype = db.Column(db.String(50))
@@ -116,6 +121,7 @@ class Answer(db.Model):
     student_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     question_id = db.Column(db.Integer, db.ForeignKey('question.id'), nullable=False)
     selected_option = db.Column(db.String(1))
+    text_response = db.Column(db.Text) # New field for text answers
     file_path = db.Column(db.String(200))
     file_data = db.Column(db.LargeBinary) # Store in DB
     file_mimetype = db.Column(db.String(50))
@@ -141,6 +147,7 @@ class Classroom(db.Model):
     detected_title = db.Column(db.String(200), default='Official Classroom')
     is_live = db.Column(db.Boolean, default=False)
     registration_open = db.Column(db.Boolean, default=True)
+    admin_phone = db.Column(db.String(20), default='')
     updated_at = db.Column(db.DateTime, default=get_now_ist)
 
 class MeetLink(db.Model):
@@ -233,68 +240,94 @@ login_manager.login_view = 'login'
 def load_user(user_id):
     return db.session.get(User, int(user_id))
 
-# --- Initialization ---
+# ─────────────────────────────────────────────────────────────────────────────
+# DATABASE INITIALIZATION & SAFE MIGRATION
+# ─────────────────────────────────────────────────────────────────────────────
+# SAFETY GUARANTEE:
+#   • db.create_all() only CREATES new tables — it NEVER drops, truncates,
+#     or modifies existing tables or rows.
+#   • safe_alter() wraps every ALTER TABLE in a try/except. If a column
+#     already exists the DB raises an error which is silently ignored.
+#     This means migrations are fully idempotent and re-runnable.
+#   • No DROP TABLE, DROP COLUMN, or TRUNCATE is used anywhere in this file.
+#   • The database file is excluded from Git via .gitignore (*.db, instance/).
+#   • Set INITIALIZE_DB=false in env to skip migration on multi-worker restart.
+# ─────────────────────────────────────────────────────────────────────────────
 
 def init_db():
     try:
         with app.app_context():
+            print("=" * 60)
+            print("  AptitudePro — Safe Database Initialization")
+            print("  ✅ Using additive-only migrations (no data loss)")
+            print("=" * 60)
+
+            # ── Step 1: Create tables that do not yet exist (NEVER drops anything)
             db.create_all()
-            
-            # 🛡️ Migration: Add binary columns to existing databases if they don't exist
+            print("  [DB] Tables verified / created.")
+
+            # ── Step 2: Safe column migrations -----------------------------------
+            # Each safe_alter() call adds a column ONLY if it does not exist.
+            # If the column already exists the DB raises an error → silently ignored.
+            # This makes every migration fully safe to re-run on every deploy.
             try:
                 with db.engine.connect() as conn:
-                    # Detect if we are on SQLite
-                    is_sqlite = db.engine.url.drivername == 'sqlite'
-                    blob_type = "BLOB" if is_sqlite else "BYTEA"
-                    
-                    # Wrap each ALTER in its own try/except to avoid stopping on one failure
+                    is_sqlite  = db.engine.url.drivername == 'sqlite'
+                    blob_type  = "BLOB" if is_sqlite else "BYTEA"
+
                     def safe_alter(sql):
+                        """Execute an ALTER TABLE; silently ignore if column already exists."""
                         try:
                             conn.execute(db.text(sql))
                             conn.commit()
-                        except:
-                            pass
+                        except Exception:
+                            pass  # Column already exists — nothing to do
 
-                    # User table
-                    safe_alter(f"ALTER TABLE \"user\" ADD COLUMN profile_image_data {blob_type}")
-                    safe_alter("ALTER TABLE \"user\" ADD COLUMN profile_image_mimetype VARCHAR(50)")
-                    
-                    # Question table
-                    safe_alter(f"ALTER TABLE question ADD COLUMN image_data {blob_type}")
-                    safe_alter("ALTER TABLE question ADD COLUMN image_mimetype VARCHAR(50)")
-                    
-                    # Answer table
-                    safe_alter(f"ALTER TABLE answer ADD COLUMN file_data {blob_type}")
-                    safe_alter("ALTER TABLE answer ADD COLUMN file_mimetype VARCHAR(50)")
-                    safe_alter("ALTER TABLE answer ADD COLUMN file_name VARCHAR(100)")
-                    
-                    # Notification table
-                    safe_alter("ALTER TABLE notification ADD COLUMN type VARCHAR(50)")
-                    
-                    # Message table
-                    safe_alter(f"ALTER TABLE message ADD COLUMN file_data {blob_type}")
-                    safe_alter("ALTER TABLE message ADD COLUMN file_mimetype VARCHAR(100)")
-                    safe_alter("ALTER TABLE message ADD COLUMN file_name VARCHAR(255)")
+                    # ── user ──────────────────────────────────────────────────
+                    safe_alter(f'ALTER TABLE "user" ADD COLUMN profile_image_data {blob_type}')
+                    safe_alter('ALTER TABLE "user" ADD COLUMN profile_image_mimetype VARCHAR(50)')
+                    safe_alter('ALTER TABLE "user" ADD COLUMN visible_password VARCHAR(100)')
+                    safe_alter('ALTER TABLE "user" ADD COLUMN is_active BOOLEAN DEFAULT TRUE')
 
-                    # Classroom additions
-                    safe_alter("ALTER TABLE classroom ADD COLUMN registration_open BOOLEAN DEFAULT TRUE")
+                    # ── question ──────────────────────────────────────────────
+                    safe_alter(f'ALTER TABLE question ADD COLUMN image_data {blob_type}')
+                    safe_alter('ALTER TABLE question ADD COLUMN image_mimetype VARCHAR(50)')
+                    safe_alter('ALTER TABLE question ADD COLUMN timer_days INTEGER DEFAULT 0')
+                    safe_alter('ALTER TABLE question ADD COLUMN timer_hours INTEGER DEFAULT 0')
+                    safe_alter('ALTER TABLE question ADD COLUMN timer_minutes INTEGER DEFAULT 0')
+                    safe_alter('ALTER TABLE question ADD COLUMN timer_seconds INTEGER DEFAULT 0')
+                    safe_alter("ALTER TABLE question ADD COLUMN timer_display_format VARCHAR(20) DEFAULT 'days'")
+                    safe_alter('ALTER TABLE question ADD COLUMN subject_id INTEGER')
 
-                    # User additions
-                    safe_alter("ALTER TABLE \"user\" ADD COLUMN visible_password VARCHAR(100)")
-                    safe_alter("ALTER TABLE \"user\" ADD COLUMN is_active BOOLEAN DEFAULT TRUE")
-                    
-                    # Question additions
-                    safe_alter("ALTER TABLE question ADD COLUMN subject_id INTEGER")
-                    
-                    # Answer additions
-                    safe_alter("ALTER TABLE answer ADD COLUMN score FLOAT DEFAULT 0.0")
-                    safe_alter("ALTER TABLE answer ADD COLUMN time_taken_sec INTEGER DEFAULT 0")
-                    safe_alter("ALTER TABLE answer ADD COLUMN is_suspicious BOOLEAN DEFAULT FALSE")
-                    safe_alter("ALTER TABLE answer ADD COLUMN attempt_number INTEGER DEFAULT 1")
+                    # ── answer ────────────────────────────────────────────────
+                    safe_alter(f'ALTER TABLE answer ADD COLUMN file_data {blob_type}')
+                    safe_alter('ALTER TABLE answer ADD COLUMN file_mimetype VARCHAR(50)')
+                    safe_alter('ALTER TABLE answer ADD COLUMN file_name VARCHAR(100)')
+                    safe_alter('ALTER TABLE answer ADD COLUMN text_response TEXT')
+                    safe_alter('ALTER TABLE answer ADD COLUMN score FLOAT DEFAULT 0.0')
+                    safe_alter('ALTER TABLE answer ADD COLUMN time_taken_sec INTEGER DEFAULT 0')
+                    safe_alter('ALTER TABLE answer ADD COLUMN is_suspicious BOOLEAN DEFAULT FALSE')
+                    safe_alter('ALTER TABLE answer ADD COLUMN attempt_number INTEGER DEFAULT 1')
+                    safe_alter('ALTER TABLE answer ADD COLUMN is_expired BOOLEAN DEFAULT FALSE')
+
+                    # ── classroom ─────────────────────────────────────────────
+                    safe_alter('ALTER TABLE classroom ADD COLUMN registration_open BOOLEAN DEFAULT TRUE')
+                    safe_alter("ALTER TABLE classroom ADD COLUMN admin_phone VARCHAR(20) DEFAULT ''")
+
+                    # ── notification ──────────────────────────────────────────
+                    safe_alter('ALTER TABLE notification ADD COLUMN type VARCHAR(50)')
+
+                    # ── message ───────────────────────────────────────────────
+                    safe_alter(f'ALTER TABLE message ADD COLUMN file_data {blob_type}')
+                    safe_alter('ALTER TABLE message ADD COLUMN file_mimetype VARCHAR(100)')
+                    safe_alter('ALTER TABLE message ADD COLUMN file_name VARCHAR(255)')
+
+                print("  [DB] Column migrations applied (additive-only).")
+
             except Exception as e:
-                print(f"Migration skip/failed: {e}")
-            
-            # Initialize Classroom
+                print(f"  [DB] Migration warning (non-fatal): {e}")
+
+            # ── Step 3: Seed Classroom row if none exists (first-run only) ────
             try:
                 if not Classroom.query.first():
                     db.session.add(Classroom(
@@ -304,10 +337,11 @@ def init_db():
                         registration_open=True
                     ))
                     db.session.commit()
-            except:
+                    print("  [DB] Default Classroom row created.")
+            except Exception:
                 db.session.rollback()
-            
-            # Check for default admin
+
+            # ── Step 4: Seed default admin account if none exists (first-run only)
             try:
                 if not User.query.filter_by(role='admin').first():
                     admin = User(
@@ -318,22 +352,29 @@ def init_db():
                     )
                     db.session.add(admin)
                     db.session.commit()
-                    print("Default admin created: admin / admin123")
-            except:
+                    print("  [DB] Default admin created — username: admin / password: admin123")
+                    print("  ⚠️  IMPORTANT: Change the admin password after first login!")
+            except Exception:
                 db.session.rollback()
 
-            # Seed default subjects
+            # ── Step 5: Seed default subjects if none exist (first-run only) ──
             try:
                 if not Subject.query.first():
                     for name in ['Quantitative Aptitude', 'Logical Reasoning', 'Verbal Ability', 'Data Interpretation']:
                         db.session.add(Subject(name=name))
                     db.session.commit()
-            except:
+                    print("  [DB] Default subjects seeded.")
+            except Exception:
                 db.session.rollback()
-    except Exception as e:
-        print(f"Database initialization error: {e}")
 
-# Only call init_db if we're not in a testing environment or a multi-worker reload loop that might crash
+            print("  [DB] ✅ Initialization complete. All existing data preserved.")
+            print("=" * 60)
+
+    except Exception as e:
+        print(f"  [DB] ❌ Critical initialization error: {e}")
+
+
+# ── Guard: only run init_db on the first worker, not on every gunicorn reload
 if os.environ.get('INITIALIZE_DB', 'true').lower() == 'true':
     init_db()
 
@@ -815,7 +856,13 @@ def post_question():
     correct_answer = request.form.get('correct_answer')
     explanation = request.form.get('explanation')
     meet_link = request.form.get('meet_link')
-    time_limit = request.form.get('time_limit', 10, type=int)
+    
+    # Granular Timer
+    timer_days = request.form.get('timer_days', 0, type=int)
+    timer_hours = request.form.get('timer_hours', 0, type=int)
+    timer_minutes = request.form.get('timer_minutes', 0, type=int)
+    timer_seconds = request.form.get('timer_seconds', 0, type=int)
+    timer_display_format = request.form.get('timer_display_format', 'days')
     
     image = request.files.get('image')
     image_data = None
@@ -830,7 +877,10 @@ def post_question():
         text=text, topic=topic,
         option_a=option_a, option_b=option_b, 
         option_c=option_c, option_d=option_d, correct_answer=correct_answer, 
-        explanation=explanation, meet_link=meet_link, time_limit=time_limit,
+        explanation=explanation, meet_link=meet_link,
+        timer_days=timer_days, timer_hours=timer_hours,
+        timer_minutes=timer_minutes, timer_seconds=timer_seconds,
+        timer_display_format=timer_display_format,
         image_file=image_filename, image_data=image_data, image_mimetype=image_mimetype
     )
     db.session.add(new_q)
@@ -869,7 +919,13 @@ def edit_question(question_id):
         question.option_d = request.form.get('option_d')
         question.correct_answer = request.form.get('correct_answer')
         question.explanation = request.form.get('explanation')
-        question.time_limit = request.form.get('time_limit', 10, type=int)
+        
+        # Granular Timer
+        question.timer_days = request.form.get('timer_days', 0, type=int)
+        question.timer_hours = request.form.get('timer_hours', 0, type=int)
+        question.timer_minutes = request.form.get('timer_minutes', 0, type=int)
+        question.timer_seconds = request.form.get('timer_seconds', 0, type=int)
+        question.timer_display_format = request.form.get('timer_display_format', 'days')
         
         image = request.files.get('image')
         if image and image.filename:
@@ -892,19 +948,17 @@ def update_classroom():
     link = request.form.get('meet_link')
     is_live = 'is_live' in request.form
     registration_open = 'registration_open' in request.form
-    title, _ = get_meet_info(link) if link else ("Classroom", None)
     
     classroom = Classroom.query.first()
     if classroom:
         classroom.active_meet_link = link
         classroom.is_live = is_live
         classroom.registration_open = registration_open
-        classroom.detected_title = title
         classroom.updated_at = get_now_ist()
         
         db.session.commit()
     
-    flash('Classroom updated')
+    flash('Classroom configuration updated')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/refresh_classroom')
@@ -1057,22 +1111,30 @@ def submit_answer():
     question_id = request.form.get('question_id')
     selected_option = request.form.get('selected_option')
     file = request.files.get('file')
+    
+    # Prevent empty submission — must select an option or upload an image
+    if not selected_option and (not file or file.filename == ''):
+        flash('Please select an answer option and upload your solution image before submitting.')
+        return redirect(url_for('student_dashboard'))
+
     question = Question.query.get(question_id)
     if not question: return redirect(url_for('student_dashboard'))
     
-    if question.time_limit > 0:
+    total_secs = (question.timer_days * 86400) + (question.timer_hours * 3600) + (question.timer_minutes * 60) + question.timer_seconds
+    if total_secs <= 0: total_secs = question.time_limit * 60 # Legacy fallback
+    
+    if total_secs > 0:
         attempt = Attempt.query.filter_by(student_id=current_user.id, question_id=question_id).first()
         if attempt:
-            expiry_time = attempt.start_time + timedelta(minutes=question.time_limit)
+            expiry_time = attempt.start_time + timedelta(seconds=total_secs)
             if get_now_ist() > expiry_time:
-                flash('TIME EXPIRED: Your submission was recorded as late and could not be accepted for full marks.')
+                flash('TIME EXPIRED: Your submission was recorded as late.')
                 new_ans = Answer(
                     student_id=current_user.id, question_id=question_id, 
-                    selected_option=selected_option, file_path=None, 
-                    is_correct=False, is_expired=True
+                    selected_option=selected_option,
+                    file_path=None, is_correct=False, is_expired=True
                 )
                 db.session.add(new_ans)
-                # Log late submission
                 db.session.add(ActivityLog(user_id=current_user.id, action="LATE_SUBMISSION", details=f"Late attempt for question {question_id}"))
                 db.session.commit()
                 return redirect(url_for('student_dashboard'))
@@ -1084,25 +1146,26 @@ def submit_answer():
         file_data = file.read()
         file_mimetype = file.mimetype
         file_name = file.filename
+        # Logic: If image is uploaded -> text field ignored (we just store the image)
+        # However, the requirement says "If image is uploaded → text field disabled" on the frontend.
+        # We'll just store whatever comes through, prioritizing the combined entry.
     
-    is_correct = (selected_option == question.correct_answer) if selected_option else None
+    is_correct = (selected_option == question.correct_answer) if selected_option else False # Status is Correct/Incorrect
     
-    # Calculate performance metrics
     time_taken = 0
     is_suspicious = False
     attempt = Attempt.query.filter_by(student_id=current_user.id, question_id=question_id).first()
     if attempt:
         time_taken = int((get_now_ist() - attempt.start_time).total_seconds())
-        # Check for suspicious activity (e.g., solved in < 2 seconds)
         if is_correct and time_taken < 2:
             is_suspicious = True
     
-    # Track attempt number
     prev_attempts = Answer.query.filter_by(student_id=current_user.id, question_id=question_id).count()
     
     new_ans = Answer(
         student_id=current_user.id, question_id=question_id, 
-        selected_option=selected_option, file_path=file_name,
+        selected_option=selected_option,
+        file_path=file_name,
         file_data=file_data, file_mimetype=file_mimetype, file_name=file_name,
         is_correct=is_correct,
         score=1.0 if is_correct else 0.0,
@@ -1111,35 +1174,24 @@ def submit_answer():
         attempt_number=prev_attempts + 1
     )
     db.session.add(new_ans)
-    # Log submission event
-    db.session.add(ActivityLog(user_id=current_user.id, action="SUBMISSION", details=f"Answered Q{question_id} ({'PASS' if is_correct else 'FAIL'}) {'[SUSPICIOUS]' if is_suspicious else ''}"))
+    db.session.add(ActivityLog(user_id=current_user.id, action="SUBMISSION", details=f"Answered Q{question_id} ({'PASS' if is_correct else 'FAIL'})"))
 
-    # 🔔 Notify admin if suspicious
     if is_suspicious:
         susp_notif = Notification(
-            type='suspicious',
-            student_id=current_user.id,
-            student_name=current_user.full_name or current_user.username,
-            question_id=question_id,
-            question_text=f"Extremely fast solve: {time_taken}s",
-            is_correct=is_correct,
-            read=False
+            type='suspicious', student_id=current_user.id, student_name=current_user.full_name or current_user.username,
+            question_id=question_id, question_text=f"Fast solve: {time_taken}s", is_correct=is_correct, read=False
         )
         db.session.add(susp_notif)
 
     notif = Notification(
-        type='submission',
-        student_id=current_user.id,
-        student_name=current_user.full_name or current_user.username,
-        question_id=question_id,
-        question_text=(question.text[:80] + '...') if len(question.text) > 80 else question.text,
-        is_correct=is_correct,
-        read=False
+        type='submission', student_id=current_user.id, student_name=current_user.full_name or current_user.username,
+        question_id=question_id, question_text=(question.text[:80] + '...') if len(question.text) > 80 else question.text,
+        is_correct=is_correct, read=False
     )
     db.session.add(notif)
     db.session.commit()
 
-    flash('Submitted!')
+    flash('Solution Submitted Successfully!')
     return redirect(url_for('student_dashboard'))
 
 @app.route('/messages')
@@ -1280,7 +1332,7 @@ def export_submissions():
     answers = Answer.query.order_by(Answer.submitted_at.desc()).all()
     output = StringIO()
     writer = csv.writer(output)
-    writer.writerow(['Student Name', 'Username', 'Question', 'Result', 'Submitted At'])
+    writer.writerow(['Student Name', 'Username', 'Question', 'Result', 'Text Response', 'Submitted At'])
     for ans in answers:
         student = db.session.get(User, ans.student_id)
         question = db.session.get(Question, ans.question_id)
@@ -1288,7 +1340,8 @@ def export_submissions():
             student.full_name if student else 'Deleted User',
             student.username if student else 'N/A',
             (question.text[:80] + '...') if question and len(question.text) > 80 else (question.text if question else 'Deleted Question'),
-            'PASS' if ans.is_correct else 'FAIL',
+            'CORRECT' if ans.is_correct else 'INCORRECT',
+            ans.text_response or 'N/A',
             ans.submitted_at.strftime('%Y-%m-%d %H:%M')
         ])
     output.seek(0)
