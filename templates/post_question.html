@@ -24,6 +24,20 @@
         <form action="{{ url_for('post_question') }}" method="POST" enctype="multipart/form-data"
             style="display: grid; gap: 1.5rem;">
 
+            <!-- Subject Selector -->
+            <div>
+                <label
+                    style="display: block; margin-bottom: 0.75rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 600;">
+                    Subject <span style="color: var(--danger);">*</span>
+                </label>
+                <select name="subject_id" required>
+                    <option value="" disabled selected>— Select a Subject —</option>
+                    {% for subject in subjects %}
+                    <option value="{{ subject.id }}">{{ subject.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
             <!-- Topic Selector -->
             <div>
                 <label

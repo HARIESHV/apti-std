@@ -321,6 +321,15 @@ def init_db():
                     print("Default admin created: admin / admin123")
             except:
                 db.session.rollback()
+
+            # Seed default subjects
+            try:
+                if not Subject.query.first():
+                    for name in ['Quantitative Aptitude', 'Logical Reasoning', 'Verbal Ability', 'Data Interpretation']:
+                        db.session.add(Subject(name=name))
+                    db.session.commit()
+            except:
+                db.session.rollback()
     except Exception as e:
         print(f"Database initialization error: {e}")
 
@@ -630,7 +639,27 @@ def student_profile():
         flash('Profile updated successfully!')
         return redirect(url_for('student_profile'))
         
-    return render_template('student_profile.html', user=current_user)
+    # Calculate subject-wise performance
+    subjects = Subject.query.all()
+    subject_stats = []
+    
+    for subj in subjects:
+        total_q = Question.query.filter_by(subject_id=subj.id).count()
+        if total_q > 0:
+            solved_q = db.session.query(Answer).join(Question).filter(
+                Answer.student_id == current_user.id,
+                Answer.is_correct == True,
+                Question.subject_id == subj.id
+            ).distinct(Answer.question_id).count()
+            
+            subject_stats.append({
+                'name': subj.name,
+                'total': total_q,
+                'solved': solved_q,
+                'accuracy': (solved_q / total_q) * 100
+            })
+            
+    return render_template('student_profile.html', user=current_user, subject_stats=subject_stats)
 
 @app.route('/admin/user/<int:user_id>', methods=['GET', 'POST'])
 @login_required
@@ -730,10 +759,13 @@ def admin_members_dashboard():
 @login_required
 def post_question():
     if current_user.role != 'admin': return redirect(url_for('student_dashboard'))
-    if request.method == 'GET': return render_template('post_question.html')
+    if request.method == 'GET':
+        subjects = Subject.query.all()
+        return render_template('post_question.html', subjects=subjects)
     
     text = request.form.get('text')
     topic = request.form.get('topic', '')
+    subject_id = request.form.get('subject_id', type=int)
     option_a = request.form.get('option_a')
     option_b = request.form.get('option_b')
     option_c = request.form.get('option_c')
@@ -753,7 +785,8 @@ def post_question():
         image_filename = image.filename
     
     new_q = Question(
-        text=text, topic=topic, option_a=option_a, option_b=option_b, 
+        text=text, topic=topic, subject_id=subject_id,
+        option_a=option_a, option_b=option_b, 
         option_c=option_c, option_d=option_d, correct_answer=correct_answer, 
         explanation=explanation, meet_link=meet_link, time_limit=time_limit,
         image_file=image_filename, image_data=image_data, image_mimetype=image_mimetype
