@@ -1,0 +1,130 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="animate-fade-in" style="max-width: 550px; margin: 4rem auto;">
+    <div class="card" style="position: relative; overflow: hidden; padding: 3rem;">
+        <div
+            style="position: absolute; top: 0; left: 0; width: 100%; height: 6px; background: linear-gradient(to right, #818cf8, #c084fc, #10b981);">
+        </div>
+
+        <div style="text-align: center; margin-bottom: 3rem;">
+            <h1 class="text-gradient" style="font-size: 2.2rem; margin-bottom: 0.75rem; font-family: 'Outfit';">Join the
+                Community</h1>
+            <p style="color: var(--text-dim); font-size: 1.1rem;">Create your student account to start learning.</p>
+        </div>
+
+        <form action="{{ url_for('register') }}" method="POST" enctype="multipart/form-data"
+            style="display: grid; gap: 1.5rem;">
+
+            <!-- Profile Image Upload Section -->
+            <div style="display: flex; flex-direction: column; align-items: center; gap: 1rem; margin-bottom: 1rem;">
+                <div id="image-preview" onclick="document.getElementById('profile_image').click()"
+                    style="width: 100px; height: 100px; border-radius: 50%; overflow: hidden; border: 3px solid var(--primary); background: rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 10px 20px rgba(0,0,0,0.2);">
+                    <svg id="placeholder-icon" style="width: 40px; height: 40px; color: var(--text-dim);"
+                        viewBox="0 0 24 24">
+                        <path fill="currentColor"
+                            d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M12,20C10,20 8.11,19.39 6.56,18.35L7.94,16.6C8.9,17.35 10.37,17.8 12,17.8C15.2,17.8 17.8,15.2 17.8,12C17.8,11.24 17.65,10.5 17.37,9.83L19.35,8.27C19.77,9.41 20,10.68 20,12A8,8 0 0,1 12,20M12,4C14,4 15.89,4.61 17.44,5.65L16.06,7.4C15.1,6.65 13.63,6.2 12,6.2C8.8,6.2 6.2,8.8 6.2,12C6.2,12.76 6.35,13.5 6.63,14.17L4.65,15.73C4.23,14.59 4,13.32 4,12A8,8 0 0,1 12,4Z" />
+                    </svg>
+                    <img id="preview-img" style="display: none; width: 100%; height: 100%; object-fit: cover;">
+                </div>
+                <input type="file" id="profile_image" name="profile_image" accept="image/*" style="display: none;"
+                    onchange="previewImage(this)">
+                <span
+                    style="font-size: 0.85rem; color: var(--primary); font-weight: 700; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px;">Add
+                    Profile Picture</span>
+            </div>
+
+            <div class="form-group">
+                <label
+                    style="display: block; margin-bottom: 0.75rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Full
+                    Name</label>
+                <div style="position: relative;">
+                    <input type="text" name="full_name" placeholder="Enter your full name" required
+                        style="padding: 1.1rem 1.1rem; border-radius: 1rem; font-size: 1rem;">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label
+                    style="display: block; margin-bottom: 0.75rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Username</label>
+                <div style="position: relative;">
+                    <input type="text" name="username" placeholder="Choose a unique username" required
+                        style="padding: 1.1rem 1.1rem; border-radius: 1rem; font-size: 1rem;">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label
+                    style="display: block; margin-bottom: 0.75rem; color: var(--text-dim); font-size: 0.9rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px;">Password</label>
+                <div style="position: relative;">
+                    <input type="password" name="password" id="password" placeholder="••••••••" required
+                        style="padding: 1.1rem 1.1rem; border-radius: 1rem; font-size: 1rem;">
+                    <button type="button" onclick="togglePassword()"
+                        style="position: absolute; right: 1rem; top: 50%; transform: translateY(-50%); background: none; border: none; color: var(--text-dim); cursor: pointer;">
+                        <svg id="eye-icon" style="width: 20px; height: 20px;" viewBox="0 0 24 24">
+                            <path fill="currentColor"
+                                d="M12,9A3,3 0 0,0 9,12A3,3 0 0,0 12,15A3,3 0 0,0 15,12A3,3 0 0,0 12,9M12,17A5,5 0 0,1 7,12A5,5 0 0,1 12,7A5,5 0 0,1 17,12A5,5 0 0,1 12,17M12,4.5C7,4.5 2.73,7.61 1,12C2.73,16.39 7,19.5 12,19.5C17,19.5 21.27,16.39 23,12C21.27,7.61 17,4.5 12,4.5Z" />
+                        </svg>
+                    </button>
+                </div>
+                <p style="font-size: 0.75rem; color: var(--text-dim); mt-2; margin-top: 0.5rem;">Use at least 8
+                    characters with a mix of letters and numbers.</p>
+            </div>
+
+            <div style="margin-top: 1rem;">
+                <button type="submit" class="btn btn-primary"
+                    style="width: 100%; justify-content: center; padding: 1.25rem; font-size: 1.1rem; border-radius: 1.25rem;">
+                    Create Account
+                    <svg style="width:24px; height:24px" viewBox="0 0 24 24">
+                        <path fill="currentColor"
+                            d="M15,14C12.33,14 7,15.33 7,18V20H23V18C23,15.33 17.67,14 15,14M6,10V7H4V10H1V12H4V15H6V12H9V10M15,12A4,4 0 0,0 19,8A4,4 0 0,0 15,4A4,4 0 0,0 11,8A4,4 0 0,0 15,12Z" />
+                    </svg>
+                </button>
+            </div>
+
+            <div
+                style="text-align: center; margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--glass-border);">
+                <span style="color: var(--text-dim);">Already have an account?</span>
+                <a href="{{ url_for('login') }}"
+                    style="color: var(--primary); text-decoration: none; font-weight: 800; margin-left: 0.5rem; transition: all 0.3s ease;">Sign
+                    In</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+    function previewImage(input) {
+        const preview = document.getElementById('preview-img');
+        const icon = document.getElementById('placeholder-icon');
+        const file = input.files[0];
+        const reader = new FileReader();
+
+        reader.onloadend = function () {
+            preview.src = reader.result;
+            preview.style.display = 'block';
+            icon.style.display = 'none';
+        }
+
+        if (file) {
+            reader.readAsDataURL(file);
+        } else {
+            preview.src = "";
+            preview.style.display = 'none';
+            icon.style.display = 'block';
+        }
+    }
+
+    function togglePassword() {
+        const passInput = document.getElementById('password');
+        const icon = document.getElementById('eye-icon');
+        if (passInput.type === 'password') {
+            passInput.type = 'text';
+            icon.style.color = 'var(--primary)';
+        } else {
+            passInput.type = 'password';
+            icon.style.color = 'var(--text-dim)';
+        }
+    }
+</script>
+{% endblock %}
