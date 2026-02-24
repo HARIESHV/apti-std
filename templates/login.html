@@ -13,7 +13,7 @@
                 style="padding: 1rem 0.5rem; background: none; border: none; font-weight: 800; font-size: 1.1rem; color: var(--primary); cursor: pointer; border-bottom: 3px solid var(--primary); transition: all 0.3s ease;">
                 Sign In
             </button>
-            {% if registration_open %}
+            {% if registration_open and not is_returning %}
             <button id="register-tab" onclick="switchTab('register')"
                 style="padding: 1rem 0.5rem; background: none; border: none; font-weight: 800; font-size: 1.1rem; color: var(--text-dim); cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s ease;">
                 Register
@@ -108,9 +108,21 @@
     window.addEventListener('DOMContentLoaded', (event) => {
         const urlParams = new URLSearchParams(window.location.search);
         const tab = urlParams.get('tab');
-        if (tab === 'register') {
-            switchTab('register');
-        }
+
+        // Use server-side flag to decide default tab
+        const isReturning = {{ is_returning | tojson
+    }};
+    const regOpen = {{ registration_open | tojson }};
+
+    if (tab === 'register' && regOpen && !isReturning) {
+        switchTab('register');
+    } else if (!isReturning && regOpen) {
+        // Default to register for new visitors
+        switchTab('register');
+    } else {
+        // Default to login for returning users
+        switchTab('login');
+    }
     });
 
     function switchTab(tab) {
@@ -120,19 +132,27 @@
         const registerTab = document.getElementById('register-tab');
 
         if (tab === 'login') {
-            loginSection.style.display = 'block';
-            registerSection.style.display = 'none';
-            loginTab.style.color = 'var(--primary)';
-            loginTab.style.borderBottomColor = 'var(--primary)';
-            registerTab.style.color = 'var(--text-dim)';
-            registerTab.style.borderBottomColor = 'transparent';
+            if (loginSection) loginSection.style.display = 'block';
+            if (registerSection) registerSection.style.display = 'none';
+            if (loginTab) {
+                loginTab.style.color = 'var(--primary)';
+                loginTab.style.borderBottomColor = 'var(--primary)';
+            }
+            if (registerTab) {
+                registerTab.style.color = 'var(--text-dim)';
+                registerTab.style.borderBottomColor = 'transparent';
+            }
         } else {
-            loginSection.style.display = 'none';
-            registerSection.style.display = 'block';
-            registerTab.style.color = 'var(--primary)';
-            registerTab.style.borderBottomColor = 'var(--primary)';
-            loginTab.style.color = 'var(--text-dim)';
-            loginTab.style.borderBottomColor = 'transparent';
+            if (loginSection) loginSection.style.display = 'none';
+            if (registerSection) registerSection.style.display = 'block';
+            if (registerTab) {
+                registerTab.style.color = 'var(--primary)';
+                registerTab.style.borderBottomColor = 'var(--primary)';
+            }
+            if (loginTab) {
+                loginTab.style.color = 'var(--text-dim)';
+                loginTab.style.borderBottomColor = 'transparent';
+            }
         }
     }
 

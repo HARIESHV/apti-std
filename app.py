@@ -331,15 +331,20 @@ def login():
             return resp
         flash('Invalid credentials')
     
+    is_returning = request.cookies.get('returning_user') == 'true'
     classroom = Classroom.query.first()
     registration_open = classroom.registration_open if classroom else True
-    return render_template('login.html', registration_open=registration_open)
+    return render_template('login.html', registration_open=registration_open, is_returning=is_returning)
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     
+    if request.cookies.get('returning_user') == 'true':
+        flash('You are already registered. Please sign in.')
+        return redirect(url_for('login'))
+        
     classroom = Classroom.query.first()
     if classroom and not classroom.registration_open:
         flash('Registration is currently closed by the administrator.')
