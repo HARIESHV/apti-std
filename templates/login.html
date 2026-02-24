@@ -13,7 +13,7 @@
                 style="padding: 1rem 0.5rem; background: none; border: none; font-weight: 800; font-size: 1.1rem; color: var(--primary); cursor: pointer; border-bottom: 3px solid var(--primary); transition: all 0.3s ease;">
                 Sign In
             </button>
-            {% if registration_open and not is_returning %}
+            {% if registration_open %}
             <button id="register-tab" onclick="switchTab('register')"
                 style="padding: 1rem 0.5rem; background: none; border: none; font-weight: 800; font-size: 1.1rem; color: var(--text-dim); cursor: pointer; border-bottom: 3px solid transparent; transition: all 0.3s ease;">
                 Register
@@ -116,13 +116,13 @@
         const isReturning = config.isReturning === 'true';
         const regOpen = config.regOpen === 'true';
 
-        if (tab === 'register' && regOpen && !isReturning) {
+        if (tab === 'register' && regOpen) {
             switchTab('register');
-        } else if (!isReturning && regOpen) {
-            // Default to register for new visitors
+        } else if (regOpen) {
+            // Always default to register if open
             switchTab('register');
         } else {
-            // Default to login for returning users
+            // Default to login if registration closed
             switchTab('login');
         }
     });

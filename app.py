@@ -345,7 +345,7 @@ def index():
         if current_user.role == 'admin':
             return redirect(url_for('admin_dashboard'))
         return redirect(url_for('student_dashboard'))
-    return redirect(url_for('login'))
+    return redirect(url_for('login', tab='register'))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
