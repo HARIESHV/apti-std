@@ -109,21 +109,39 @@
     // Initialize tab based on URL parameter
     window.addEventListener('DOMContentLoaded', (event) => {
         const urlParams = new URLSearchParams(window.location.search);
-        const tab = urlParams.get('tab');
+        const tabParam = urlParams.get('tab');
+
+        // Check if user is already registered on this browser
+        const isRegisteredLocal = localStorage.getItem('is_registered') === 'true';
 
         // Use server-side flag to decide default tab
         const config = document.getElementById('login-config').dataset;
         const isReturning = config.isReturning === 'true';
         const regOpen = config.regOpen === 'true';
 
-        if (tab === 'register' && regOpen) {
+        // Log configuration for debugging if needed
+        console.log('Reg Status:', { isReturning, isRegisteredLocal, regOpen, tabParam });
+
+        if (tabParam === 'register' && regOpen) {
             switchTab('register');
-        } else if (regOpen) {
-            // Always default to register if open
+        } else if (tabParam === 'login') {
+            switchTab('login');
+        } else if (regOpen && !isReturning) {
+            // New user, show registration by default
             switchTab('register');
         } else {
-            // Default to login if registration closed
+            // Already registered or registration closed
             switchTab('login');
+        }
+
+        // Add form submission listener for registration
+        const regForm = document.querySelector('#register-section form');
+        if (regForm) {
+            regForm.addEventListener('submit', function () {
+                const btn = this.querySelector('button[type="submit"]');
+                btn.disabled = true;
+                btn.innerHTML = 'Creating Account... <span class="spinner"></span>';
+            });
         }
     });
 

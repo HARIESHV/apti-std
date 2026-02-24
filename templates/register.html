@@ -67,7 +67,7 @@
                         </svg>
                     </button>
                 </div>
-                <p style="font-size: 0.75rem; color: var(--text-dim); mt-2; margin-top: 0.5rem;">Use at least 8
+                <p style="font-size: 0.75rem; color: var(--text-dim); margin-top: 0.5rem;">Use at least 8
                     characters with a mix of letters and numbers.</p>
             </div>
 
@@ -94,6 +94,15 @@
 </div>
 
 <script>
+    window.addEventListener('DOMContentLoaded', () => {
+        const form = document.querySelector('form');
+        form.addEventListener('submit', function (e) {
+            const btn = this.querySelector('button[type="submit"]');
+            btn.disabled = true;
+            btn.innerHTML = 'Establishing Account...';
+        });
+    });
+
     function previewImage(input) {
         const preview = document.getElementById('preview-img');
         const icon = document.getElementById('placeholder-icon');

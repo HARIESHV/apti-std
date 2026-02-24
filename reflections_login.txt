@@ -1,0 +1,155 @@
+import requests
+
+# We need to run the app to test this, but we can't easily do that here.
+# Instead, let's look at the code again.
+
+# Wait, I see something!
+# In app.py, the login function:
+# 361:             login_user(user, remember=True)
+# ...
+# 398:             resp = make_response(redirect(url_for('index')))
+# 399:             resp.set_cookie('returning_user', 'true', max_age=315360000) # 10 years
+# 400:             return resp
+
+# What if the user is logging in via the registration form?
+# The registration form also does:
+# 487:         login_user(new_user, remember=True)
+# ...
+# 491:         resp = make_response(redirect(url_for('index')))
+# 492:         resp.set_cookie('returning_user', 'true', max_age=315360000) # 10 years
+# 493:         return resp
+
+# Both seem to redirect to index.
+
+# Is there any possibility that the 'index' route itself is problematic?
+# 342: @app.route('/')
+# 343: def index():
+# 344:     if current_user.is_authenticated:
+# 345:         if current_user.role == 'admin':
+# 346:             return redirect(url_for('admin_dashboard'))
+# 347:         return redirect(url_for('student_dashboard'))
+# 348:     return redirect(url_for('login', tab='register'))
+
+# This logic seems sound.
+
+# Let's check the 'student_dashboard' route AGAIN.
+# 976: @app.route('/student/dashboard')
+# 977: @login_required
+# 978: def student_dashboard():
+# 979:     if current_user.role != 'student': return redirect(url_for('admin_dashboard'))
+
+# And admin_dashboard:
+# 524: @app.route('/admin/dashboard')
+# 525: @login_required
+# 526: def admin_dashboard():
+# 527:     if current_user.role != 'admin':
+# 528:         return redirect(url_for('student_dashboard'))
+
+# If role is NOT 'admin' and NOT 'student', we have an infinite loop.
+# But default is 'student'.
+
+# Wait! I found something interesting in the user's files.
+# student_dashboard_new.html exists.
+# But it's not being used.
+
+# Let's check if the user is trying to access a page called "Dashboard" 
+# but the route is named 'student_dashboard' or 'admin_dashboard'.
+# url_for('admin_dashboard') -> /admin/dashboard
+# url_for('student_dashboard') -> /student/dashboard
+
+# Does the user have a route named 'dashboard'? No.
+
+# Wait! I just noticed something in `app.py`.
+# 1: from flask import Flask, render_template, redirect, url_for, request, flash, jsonify, send_file, send_from_directory, make_response
+# ...
+# 350: @app.route('/login', methods=['GET', 'POST'])
+# 351: def login():
+# ...
+# 398:             resp = make_response(redirect(url_for('index')))
+
+# What if 'index' is not the correct name for the root route?
+# 342: @app.route('/')
+# 343: def index():
+# Yes, it is named 'index'.
+
+# Wait, what if the user is logging in and the 'next' parameter is being ignored?
+# Some systems use a 'next' parameter to redirect after login.
+# This code doesn't seem to use it.
+# 361:             login_user(user, remember=True)
+# ...
+# 398:             resp = make_response(redirect(url_for('index')))
+
+# This code ALWAYS redirects to 'index'.
+
+# Wait, I found a potential issue!
+# In login.html, the Sign In button is inside #login-section.
+# 41:                 <button type="submit" class="btn btn-primary"
+# 42:                     style="width: 100%; justify-content: center; padding: 1.1rem;">
+# 43:                     Enter Dashboard
+
+# If they click it, it submits to /login.
+
+# Let's check if the user is using `student_dashboard_new.html` somewhere.
+# No, it's just in the file list.
+
+# WAIT! I see the issue now.
+# In `login.html`, there is a JavaScript block at the end.
+# 110:     window.addEventListener('DOMContentLoaded', (event) => {
+# ...
+# 137:         // Add form submission listener for registration
+# 138:         const regForm = document.querySelector('#register-section form');
+# 139:         if (regForm) {
+# 140:             regForm.addEventListener('submit', function () {
+# 141:                 const btn = this.querySelector('button[type="submit"]');
+# 142:                 btn.disabled = true;
+# 143:                 btn.innerHTML = 'Creating Account... <span class="spinner"></span>';
+# 144:                 localStorage.setItem('is_registered', 'true');
+# 145:             });
+# 146:         }
+# 147:     });
+
+# What if there is a similar listener for the login form that is MISSING or BROKEN?
+# Well, there isn't one for the login form. So it should just submit normally and redirect.
+
+# Wait, I'll check the `layout.html` again for any `if not current_user.is_authenticated` redirects in JS.
+# No, don't see any.
+
+# Let's check the `login` function one more time.
+# 352:     if current_user.is_authenticated:
+# 353:         return redirect(url_for('index'))
+
+# If they are ALREADY logged in, it redirects them.
+
+# Wait, I'll check if the `db.session.commit()` is failing?
+# 396:             db.session.commit()
+# If this fails, it might throw an error and they see a 500 page.
+# But they said "it does not redirect", which usually means staying on the same page.
+
+# Wait, if they stay on the same page, AND they don't see "Invalid credentials", 
+# what could be happening?
+# Maybe the form is not actually submitting?
+# But it's a standard `<button type="submit">` inside a `<form>`.
+
+# Wait, I found it!
+# Look at the `login` route:
+# 350: @app.route('/login', methods=['GET', 'POST'])
+# 351: def login():
+# 352:     if current_user.is_authenticated:
+# 353:         return redirect(url_for('index'))
+# ...
+# 403:     is_returning = request.cookies.get('returning_user') == 'true'
+# 404:     classroom = Classroom.query.first()
+# 405:     registration_open = classroom.registration_open if classroom else True
+# 406:     return render_template('login.html', registration_open=registration_open, is_returning=is_returning)
+
+# If the POST request doesn't return (e.g. timeout or hanging), 
+# then it won't redirect. But why would it hang?
+
+# What if the user is seeing the error "Invalid credentials" but it's hidden?
+# No, it's using flashed messages which are visible.
+
+# Let's check the `app.py` for any other `login` related logic.
+# Wait, I'll check the `User` table for the last user registered.
+# Maybe registration works but login doesn't?
+
+# I'll check the `LoginLog` table.

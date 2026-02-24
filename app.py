@@ -358,47 +358,60 @@ def login():
         user = User.query.filter_by(username=username).first()
         
         if user and check_password_hash(user.password, password):
-            login_user(user, remember=True)
-            # Record detailed login log
-            ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr)
-            user_agent = request.headers.get('User-Agent')
-            login_log = LoginLog(
-                user_id=user.id,
-                ip_address=ip_addr,
-                user_agent=user_agent,
-                status='success'
-            )
-            db.session.add(login_log)
-            
-            # Attendance tracking
-            if user.role == 'student':
-                today = get_now_ist().date()
-                attendance = Attendance.query.filter_by(user_id=user.id, date=today).first()
-                if not attendance:
-                    attendance = Attendance(user_id=user.id, date=today)
-                    db.session.add(attendance)
-                else:
-                    attendance.last_active = get_now_ist()
-
-            # Log login event
-            db.session.add(ActivityLog(user_id=user.id, action="LOGIN", details=f"User {user.username} logged in"))
-            
-            # Notify admin of login if it's a student
-            if user.role == 'student':
-                notif = Notification(
-                    type='login',
-                    student_id=user.id,
-                    student_name=user.full_name or user.username,
-                    read=False
+            try:
+                login_user(user, remember=True)
+                # Record detailed login log
+                ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr)
+                user_agent = request.headers.get('User-Agent')
+                login_log = LoginLog(
+                    user_id=user.id,
+                    ip_address=ip_addr,
+                    user_agent=user_agent,
+                    status='success'
                 )
-                db.session.add(notif)
-            
-            db.session.commit()
-            
-            resp = make_response(redirect(url_for('index')))
-            resp.set_cookie('returning_user', 'true', max_age=315360000) # 10 years
-            return resp
-        flash('Invalid credentials')
+                db.session.add(login_log)
+                
+                # Attendance tracking
+                if user.role == 'student':
+                    today = get_now_ist().date()
+                    attendance = Attendance.query.filter_by(user_id=user.id, date=today).first()
+                    if not attendance:
+                        attendance = Attendance(user_id=user.id, date=today)
+                        db.session.add(attendance)
+                    else:
+                        attendance.last_active = get_now_ist()
+
+                # Log login event
+                db.session.add(ActivityLog(user_id=user.id, action="LOGIN", details=f"User {user.username} logged in"))
+                
+                # Notify admin of login if it's a student
+                if user.role == 'student':
+                    notif = Notification(
+                        type='login',
+                        student_id=user.id,
+                        student_name=user.full_name or user.username,
+                        read=False
+                    )
+                    db.session.add(notif)
+                
+                db.session.commit()
+                
+                # Handle 'next' page redirection
+                next_page = request.args.get('next')
+                if not next_page or not next_page.startswith('/'):
+                    if user.role == 'admin':
+                        next_page = url_for('admin_dashboard')
+                    else:
+                        next_page = url_for('student_dashboard')
+                
+                resp = make_response(redirect(next_page))
+                resp.set_cookie('returning_user', 'true', max_age=315360000) # 10 years
+                return resp
+            except Exception as e:
+                db.session.rollback()
+                flash(f'Login error: {str(e)}')
+        else:
+            flash('Invalid username or password. Please try again.')
     
     is_returning = request.cookies.get('returning_user') == 'true'
     classroom = Classroom.query.first()
@@ -410,10 +423,6 @@ def register():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
     
-    if request.cookies.get('returning_user') == 'true':
-        flash('You are already registered. Please sign in.')
-        return redirect(url_for('login'))
-        
     classroom = Classroom.query.first()
     if classroom and not classroom.registration_open:
         flash('Registration is currently closed by the administrator.')
@@ -424,62 +433,67 @@ def register():
         full_name = request.form.get('full_name')
         password = request.form.get('password')
         
-        max_members = 1000000000
-        current_members = User.query.filter_by(role='student').count()
-        
-        if current_members >= max_members:
-            flash(f'Registration limit reached ({max_members} members).')
+        if not username or not password:
+            flash('Username and password are required.')
             return redirect(url_for('login', tab='register'))
 
         if User.query.filter_by(username=username).first():
-            flash('Username already exists')
+            flash('Username already exists. Please choose another.')
             return redirect(url_for('login', tab='register'))
             
-        image = request.files.get('profile_image')
-        image_data = None
-        image_mimetype = None
-        image_filename = None
-        if image and allowed_file(image.filename):
-            image_data = image.read()
-            image_mimetype = image.mimetype
-            image_filename = image.filename
+        try:
+            image = request.files.get('profile_image')
+            image_data = None
+            image_mimetype = None
+            image_filename = None
+            if image and allowed_file(image.filename):
+                image_data = image.read()
+                image_mimetype = image.mimetype
+                image_filename = image.filename
 
-        hashed_pw = generate_password_hash(password)
-        # Store alphanumeric version for visibility
-        v_pass = "".join(filter(str.isalnum, password))
-        new_user = User(
-            username=username,
-            full_name=full_name,
-            password=hashed_pw,
-            visible_password=v_pass,
-            role='student',
-            profile_image=image_filename,
-            profile_image_data=image_data,
-            profile_image_mimetype=image_mimetype
-        )
-        db.session.add(new_user)
-        db.session.commit()
-        
-        # Log registration event
-        db.session.add(ActivityLog(user_id=new_user.id, action="REGISTER", details=f"New user registered: {new_user.username}"))
-        
-        # Notify admin of registration
-        notif = Notification(
-            type='register',
-            student_id=new_user.id,
-            student_name=new_user.full_name or new_user.username,
-            read=False
-        )
-        db.session.add(notif)
-        
-        db.session.commit()
-        
-        login_user(new_user, remember=True)
-        flash('Account created!')
-        resp = make_response(redirect(url_for('student_dashboard')))
-        resp.set_cookie('returning_user', 'true', max_age=315360000) # 10 years
-        return resp
-        
+            hashed_pw = generate_password_hash(password)
+            v_pass = "".join(filter(str.isalnum, password))
+            
+            new_user = User(
+                username=username,
+                full_name=full_name,
+                password=hashed_pw,
+                visible_password=v_pass,
+                role='student',
+                profile_image=image_filename,
+                profile_image_data=image_data,
+                profile_image_mimetype=image_mimetype
+            )
+            db.session.add(new_user)
+            db.session.commit() # Save user first to get ID
+            
+            # Log registration event
+            ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr)
+            db.session.add(ActivityLog(user_id=new_user.id, action="REGISTER", details=f"New user registered: {new_user.username} | IP: {ip_addr}"))
+            
+            # Notify admin
+            notif = Notification(
+                type='register',
+                student_id=new_user.id,
+                student_name=new_user.full_name or new_user.username,
+                read=False
+            )
+            db.session.add(notif)
+            db.session.commit()
+            
+            # Auto-login the user
+            login_user(new_user, remember=True)
+            flash('Welcome! Your account has been created.')
+            
+            resp = make_response(redirect(url_for('student_dashboard')))
+            resp.set_cookie('returning_user', 'true', max_age=315360000) # 10 years
+            return resp
+        except Exception as e:
+            db.session.rollback()
+            flash(f'Registration error: {str(e)}')
+            return redirect(url_for('login', tab='register'))
+            
+    return render_template('login.html', registration_open=True, tab='register')
 @app.route('/history')
 @login_required
 def history():
