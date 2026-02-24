@@ -1,0 +1,99 @@
+{% extends "layout.html" %}
+
+{% block content %}
+<div class="hero-header animate-fade-in">
+    <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">Attendance & <span
+            class="text-gradient">Activity Reports</span></h1>
+    <p style="color: var(--text-dim);">Monitor student engagement and platform health.</p>
+</div>
+
+<div style="grid-template-columns: 2fr 1fr; display: grid; gap: 2rem;">
+    <!-- Attendance Table -->
+    <div class="card glass-panel">
+        <h2 style="font-size: 1.5rem; margin-bottom: 1.5rem;">Daily Attendance</h2>
+        <div style="overflow-x: auto;">
+            <table style="width: 100%; border-collapse: collapse; text-align: left;">
+                <thead>
+                    <tr style="border-bottom: 1px solid var(--glass-border);">
+                        <th style="padding: 1rem; color: var(--text-dim); font-size: 0.85rem;">Student</th>
+                        <th style="padding: 1rem; color: var(--text-dim); font-size: 0.85rem;">Date</th>
+                        <th style="padding: 1rem; color: var(--text-dim); font-size: 0.85rem;">First Login</th>
+                        <th style="padding: 1rem; color: var(--text-dim); font-size: 0.85rem;">Last Active</th>
+                        <th style="padding: 1rem; color: var(--text-dim); font-size: 0.85rem;">Duration</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in attendance_records %}
+                    <tr style="border-bottom: 1px solid rgba(255,255,255,0.05);">
+                        <td style="padding: 1rem; font-weight: 600;">{{ record.user.full_name or record.user.username }}
+                        </td>
+                        <td style="padding: 1rem;">{{ record.date.strftime('%Y-%m-%d') }}</td>
+                        <td style="padding: 1rem; font-size: 0.85rem;">{{ record.first_login.strftime('%H:%M:%S') }}
+                        </td>
+                        <td style="padding: 1rem; font-size: 0.85rem;">{{ record.last_active.strftime('%H:%M:%S') }}
+                        </td>
+                        <td style="padding: 1rem;">
+                            <span class="badge" style="background: rgba(99, 102, 241, 0.1); color: var(--primary);">
+                                {{ record.total_minutes_online }} mins
+                            </span>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="5" style="padding: 2rem; text-align: center; color: var(--text-dim);">No attendance
+                            records found for today.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Security Alerts -->
+    <div class="card glass-panel" style="border-left: 4px solid var(--danger);">
+        <h2 style="font-size: 1.5rem; margin-bottom: 1.5rem; color: var(--danger);">Suspicious Activity</h2>
+        <div style="display: grid; gap: 1rem;">
+            {% for alert in alerts %}
+            <div
+                style="padding: 1rem; background: rgba(239, 68, 68, 0.05); border-radius: 12px; border: 1px solid rgba(239, 68, 68, 0.1);">
+                <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <strong style="font-size: 0.9rem;">{{ alert.user.username }}</strong>
+                    <span style="font-size: 0.75rem; color: var(--text-dim);">{{ alert.timestamp.strftime('%H:%M')
+                        }}</span>
+                </div>
+                <p style="font-size: 0.8rem; color: var(--danger); margin: 0;">{{ alert.message }}</p>
+                <div style="font-size: 0.7rem; color: var(--text-dim); margin-top: 5px;">IP: {{ alert.ip }}</div>
+            </div>
+            {% else %}
+            <div style="text-align: center; padding: 2rem; color: var(--text-dim);">
+                <svg style="width:48px;height:48px;opacity: 0.2; margin-bottom: 1rem;" viewBox="0 0 24 24">
+                    <path fill="currentColor"
+                        d="M12,2A10,10 0 0,0 2,12A10,10 0 0,0 12,22A10,10 0 0,0 22,12A10,10 0 0,0 12,2M12,20A8,8 0 0,1 4,12A8,8 0 0,1 12,4A8,8 0 0,1 20,12A8,8 0 0,1 12,20M11,7H13V13H11V7M11,15H13V17H11V15Z" />
+                </svg>
+                <p>No security threats detected.</p>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+<div class="card glass-panel" style="margin-top: 2rem;">
+    <h2 style="font-size: 1.5rem; margin-bottom: 1.5rem;">Recent Logins</h2>
+    <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem;">
+        {% for log in recent_logins %}
+        <div class="glass-panel" style="padding: 1rem; background: rgba(255,255,255,0.02); border-radius: 12px;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem;">
+                <span style="font-weight: 700; font-size: 0.9rem;">{{ log.user.username }}</span>
+                <span style="font-size: 0.7rem; color: var(--accent);">{{ log.status.upper() }}</span>
+            </div>
+            <div style="font-size: 0.75rem; color: var(--text-dim); font-family: monospace;">{{ log.ip_address }}</div>
+            <div
+                style="font-size: 0.7rem; color: var(--text-dim); margin-top: 5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">
+                {{ log.user_agent }}</div>
+            <div style="font-size: 0.7rem; color: var(--text-dim); text-align: right; margin-top: 5px;">{{
+                log.login_time.strftime('%Y-%m-%d %H:%M') }}</div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}

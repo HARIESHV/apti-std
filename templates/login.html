@@ -102,6 +102,8 @@
         </div>
     </div>
 </div>
+<div id="login-config" data-is-returning="{{ is_returning|tojson }}" data-reg-open="{{ registration_open|tojson }}"
+    style="display: none;"></div>
 
 <script>
     // Initialize tab based on URL parameter
@@ -110,19 +112,19 @@
         const tab = urlParams.get('tab');
 
         // Use server-side flag to decide default tab
-        const isReturning = {{ is_returning | tojson
-    }};
-    const regOpen = {{ registration_open | tojson }};
+        const config = document.getElementById('login-config').dataset;
+        const isReturning = config.isReturning === 'true';
+        const regOpen = config.regOpen === 'true';
 
-    if (tab === 'register' && regOpen && !isReturning) {
-        switchTab('register');
-    } else if (!isReturning && regOpen) {
-        // Default to register for new visitors
-        switchTab('register');
-    } else {
-        // Default to login for returning users
-        switchTab('login');
-    }
+        if (tab === 'register' && regOpen && !isReturning) {
+            switchTab('register');
+        } else if (!isReturning && regOpen) {
+            // Default to register for new visitors
+            switchTab('register');
+        } else {
+            // Default to login for returning users
+            switchTab('login');
+        }
     });
 
     function switchTab(tab) {

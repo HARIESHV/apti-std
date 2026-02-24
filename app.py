@@ -68,10 +68,13 @@ class User(UserMixin, db.Model):
     profile_image_data = db.Column(db.LargeBinary) # Store in DB
     profile_image_mimetype = db.Column(db.String(50))
     visible_password = db.Column(db.String(100)) # Stores the alphanumeric version for admin
+    is_active = db.Column(db.Boolean, default=True)
     created_at = db.Column(db.DateTime, default=get_now_ist)
     
     answers = db.relationship('Answer', backref='student', lazy=True)
     attempts = db.relationship('Attempt', backref='student', lazy=True)
+    login_logs = db.relationship('LoginLog', backref='user', lazy=True)
+    attendance_records = db.relationship('Attendance', backref='user', lazy=True)
 
     @property
     def solved_count(self):
@@ -102,6 +105,7 @@ class Question(db.Model):
     image_file = db.Column(db.String(100))
     image_data = db.Column(db.LargeBinary) # Store in DB
     image_mimetype = db.Column(db.String(50))
+    subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'))
     created_at = db.Column(db.DateTime, default=get_now_ist)
     
     answers = db.relationship('Answer', backref='question', lazy=True)
@@ -117,6 +121,10 @@ class Answer(db.Model):
     file_mimetype = db.Column(db.String(50))
     file_name = db.Column(db.String(100))
     is_correct = db.Column(db.Boolean)
+    score = db.Column(db.Float, default=0.0)
+    time_taken_sec = db.Column(db.Integer, default=0)
+    is_suspicious = db.Column(db.Boolean, default=False)
+    attempt_number = db.Column(db.Integer, default=1)
     is_expired = db.Column(db.Boolean, default=False)
     submitted_at = db.Column(db.DateTime, default=get_now_ist)
 
@@ -174,6 +182,28 @@ class Message(db.Model):
     
     sender = db.relationship('User', foreign_keys=[sender_id], backref='sent_messages')
     receiver = db.relationship('User', foreign_keys=[receiver_id], backref='received_messages')
+
+class Subject(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+
+class LoginLog(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    login_time = db.Column(db.DateTime, default=get_now_ist)
+    ip_address = db.Column(db.String(45))
+    user_agent = db.Column(db.String(255))
+    device_fingerprint = db.Column(db.String(255))
+    status = db.Column(db.String(20)) # success, failed
+
+class Attendance(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    date = db.Column(db.Date, default=lambda: get_now_ist().date())
+    first_login = db.Column(db.DateTime, default=get_now_ist)
+    last_active = db.Column(db.DateTime, default=get_now_ist)
+    total_minutes_online = db.Column(db.Integer, default=0)
+    __table_args__ = (db.UniqueConstraint('user_id', 'date', name='_user_date_uc'), )
 
 # --- Helpers ---
 
@@ -251,6 +281,16 @@ def init_db():
 
                     # User additions
                     safe_alter("ALTER TABLE \"user\" ADD COLUMN visible_password VARCHAR(100)")
+                    safe_alter("ALTER TABLE \"user\" ADD COLUMN is_active BOOLEAN DEFAULT TRUE")
+                    
+                    # Question additions
+                    safe_alter("ALTER TABLE question ADD COLUMN subject_id INTEGER")
+                    
+                    # Answer additions
+                    safe_alter("ALTER TABLE answer ADD COLUMN score FLOAT DEFAULT 0.0")
+                    safe_alter("ALTER TABLE answer ADD COLUMN time_taken_sec INTEGER DEFAULT 0")
+                    safe_alter("ALTER TABLE answer ADD COLUMN is_suspicious BOOLEAN DEFAULT FALSE")
+                    safe_alter("ALTER TABLE answer ADD COLUMN attempt_number INTEGER DEFAULT 1")
             except Exception as e:
                 print(f"Migration skip/failed: {e}")
             
@@ -310,7 +350,27 @@ def login():
         
         if user and check_password_hash(user.password, password):
             login_user(user, remember=True)
+            # Record detailed login log
+            ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr)
+            user_agent = request.headers.get('User-Agent')
+            login_log = LoginLog(
+                user_id=user.id,
+                ip_address=ip_addr,
+                user_agent=user_agent,
+                status='success'
+            )
+            db.session.add(login_log)
             
+            # Attendance tracking
+            if user.role == 'student':
+                today = get_now_ist().date()
+                attendance = Attendance.query.filter_by(user_id=user.id, date=today).first()
+                if not attendance:
+                    attendance = Attendance(user_id=user.id, date=today)
+                    db.session.add(attendance)
+                else:
+                    attendance.last_active = get_now_ist()
+
             # Log login event
             db.session.add(ActivityLog(user_id=user.id, action="LOGIN", details=f"User {user.username} logged in"))
             
@@ -510,6 +570,36 @@ def admin_activity_logs():
         return redirect(url_for('student_dashboard'))
     logs = ActivityLog.query.order_by(ActivityLog.event_time.desc()).all()
     return render_template('admin_activity.html', activity_logs=logs)
+
+@app.route('/admin/reports')
+@login_required
+def admin_reports():
+    if current_user.role != 'admin':
+        return redirect(url_for('student_dashboard'))
+    
+    today = get_now_ist().date()
+    attendance_records = Attendance.query.filter_by(date=today).order_by(Attendance.last_active.desc()).all()
+    recent_logins = LoginLog.query.order_by(LoginLog.login_time.desc()).limit(50).all()
+    
+    alerts = []
+    # Fetch suspicious answers
+    susp_answers = Answer.query.filter_by(is_suspicious=True).order_by(Answer.submitted_at.desc()).limit(10).all()
+    for sa in susp_answers:
+        student = db.session.get(User, sa.student_id)
+        alerts.append({
+            'user': student,
+            'timestamp': sa.submitted_at,
+            'message': f"Extremely fast solve: {sa.time_taken_sec}s for Question #{sa.question_id}",
+            'ip': 'Alert from submission'
+        })
+        
+    # Check for multi-IP logins in recent logs
+    # Using a simple heuristic for this demo
+    
+    return render_template('admin_attendance.html', 
+                          attendance_records=attendance_records,
+                          recent_logins=recent_logins,
+                          alerts=alerts)
 
 @app.route('/student/profile', methods=['GET', 'POST'])
 @login_required
@@ -788,6 +878,27 @@ def delete_meet_link(link_id):
 
 # --- Student Routes ---
 
+@app.route('/api/heartbeat', methods=['POST'])
+@login_required
+def heartbeat():
+    if current_user.role != 'student':
+        return jsonify({'status': 'ignored'}), 200
+    
+    today = get_now_ist().date()
+    attendance = Attendance.query.filter_by(user_id=current_user.id, date=today).first()
+    if attendance:
+        now = get_now_ist()
+        # Calculate minutes since last active if it was recent (within 10 mins)
+        diff = (now - attendance.last_active).total_seconds()
+        if diff < 600: # 10 minutes
+            attendance.total_minutes_online += int(diff / 60)
+        
+        attendance.last_active = now
+        db.session.commit()
+        return jsonify({'status': 'updated', 'total_minutes': attendance.total_minutes_online}), 200
+    
+    return jsonify({'status': 'no_record'}), 200
+
 @app.route('/student/dashboard')
 @login_required
 def student_dashboard():
@@ -900,17 +1011,47 @@ def submit_answer():
         file_name = file.filename
     
     is_correct = (selected_option == question.correct_answer) if selected_option else None
+    
+    # Calculate performance metrics
+    time_taken = 0
+    is_suspicious = False
+    attempt = Attempt.query.filter_by(student_id=current_user.id, question_id=question_id).first()
+    if attempt:
+        time_taken = int((get_now_ist() - attempt.start_time).total_seconds())
+        # Check for suspicious activity (e.g., solved in < 2 seconds)
+        if is_correct and time_taken < 2:
+            is_suspicious = True
+    
+    # Track attempt number
+    prev_attempts = Answer.query.filter_by(student_id=current_user.id, question_id=question_id).count()
+    
     new_ans = Answer(
         student_id=current_user.id, question_id=question_id, 
         selected_option=selected_option, file_path=file_name,
         file_data=file_data, file_mimetype=file_mimetype, file_name=file_name,
-        is_correct=is_correct
+        is_correct=is_correct,
+        score=1.0 if is_correct else 0.0,
+        time_taken_sec=time_taken,
+        is_suspicious=is_suspicious,
+        attempt_number=prev_attempts + 1
     )
     db.session.add(new_ans)
     # Log submission event
-    db.session.add(ActivityLog(user_id=current_user.id, action="SUBMISSION", details=f"Answered Q{question_id} ({'PASS' if is_correct else 'FAIL'})"))
+    db.session.add(ActivityLog(user_id=current_user.id, action="SUBMISSION", details=f"Answered Q{question_id} ({'PASS' if is_correct else 'FAIL'}) {'[SUSPICIOUS]' if is_suspicious else ''}"))
 
-    # 🔔 Notify admin
+    # 🔔 Notify admin if suspicious
+    if is_suspicious:
+        susp_notif = Notification(
+            type='suspicious',
+            student_id=current_user.id,
+            student_name=current_user.full_name or current_user.username,
+            question_id=question_id,
+            question_text=f"Extremely fast solve: {time_taken}s",
+            is_correct=is_correct,
+            read=False
+        )
+        db.session.add(susp_notif)
+
     notif = Notification(
         type='submission',
         student_id=current_user.id,

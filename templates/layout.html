@@ -517,6 +517,22 @@
         setInterval(updateNotifications, 10000); // Every 10 seconds
     </script>
     {% endif %}
+    {% if current_user.is_authenticated and current_user.role == 'student' %}
+    <script>
+        // Automatic Attendance Heartbeat
+        function sendHeartbeat() {
+            fetch('/api/heartbeat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' }
+            }).catch(err => console.debug('Heartbeat failed', err));
+        }
+
+        // Send immediately on load
+        sendHeartbeat();
+        // Send every 5 minutes
+        setInterval(sendHeartbeat, 300000);
+    </script>
+    {% endif %}
 </body>
 
 </html>
