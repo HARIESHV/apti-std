@@ -610,6 +610,36 @@ def admin_reports():
                           recent_logins=recent_logins,
                           alerts=alerts)
 
+@app.route('/admin/reports/export')
+@login_required
+def export_attendance():
+    if current_user.role != 'admin':
+        return redirect(url_for('student_dashboard'))
+    
+    import csv
+    from io import StringIO
+    
+    si = StringIO()
+    cw = csv.writer(si)
+    cw.writerow(['Student Name', 'Username', 'Date', 'First Login', 'Last Active', 'Total Minutes'])
+    
+    attendance = Attendance.query.order_by(Attendance.date.desc()).all()
+    for rec in attendance:
+        user = db.session.get(User, rec.user_id)
+        cw.writerow([
+            user.full_name or user.username,
+            user.username,
+            rec.date.strftime('%Y-%m-%d'),
+            rec.first_login.strftime('%H:%M:%S'),
+            rec.last_active.strftime('%H:%M:%S'),
+            rec.total_minutes_online
+        ])
+    
+    output = make_response(si.getvalue())
+    output.headers["Content-Disposition"] = f"attachment; filename=attendance_report_{get_now_ist().strftime('%Y%m%d')}.csv"
+    output.headers["Content-type"] = "text/csv"
+    return output
+
 @app.route('/student/profile', methods=['GET', 'POST'])
 @login_required
 def student_profile():
@@ -760,12 +790,10 @@ def admin_members_dashboard():
 def post_question():
     if current_user.role != 'admin': return redirect(url_for('student_dashboard'))
     if request.method == 'GET':
-        subjects = Subject.query.all()
-        return render_template('post_question.html', subjects=subjects)
+        return render_template('post_question.html')
     
     text = request.form.get('text')
     topic = request.form.get('topic', '')
-    subject_id = request.form.get('subject_id', type=int)
     option_a = request.form.get('option_a')
     option_b = request.form.get('option_b')
     option_c = request.form.get('option_c')
@@ -785,7 +813,7 @@ def post_question():
         image_filename = image.filename
     
     new_q = Question(
-        text=text, topic=topic, subject_id=subject_id,
+        text=text, topic=topic,
         option_a=option_a, option_b=option_b, 
         option_c=option_c, option_d=option_d, correct_answer=correct_answer, 
         explanation=explanation, meet_link=meet_link, time_limit=time_limit,

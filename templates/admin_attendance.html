@@ -2,9 +2,21 @@
 
 {% block content %}
 <div class="hero-header animate-fade-in">
-    <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">Attendance & <span
-            class="text-gradient">Activity Reports</span></h1>
-    <p style="color: var(--text-dim);">Monitor student engagement and platform health.</p>
+    <div style="display: flex; justify-content: space-between; align-items: center;">
+        <div>
+            <h1 style="font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem;">Attendance & <span
+                    class="text-gradient">Activity Reports</span></h1>
+            <p style="color: var(--text-dim);">Monitor student engagement and platform health.</p>
+        </div>
+        <a href="{{ url_for('export_attendance') }}" class="btn btn-primary"
+            style="display: flex; align-items: center; gap: 8px; padding: 0.75rem 1.5rem;">
+            <svg style="width:20px; height:20px" viewBox="0 0 24 24">
+                <path fill="currentColor"
+                    d="M14,2L20,8V20A2,2 0 0,1 18,22H6A2,2 0 0,1 4,20V4A2,2 0 0,1 6,2H14M18,20V9H13V4H6V20H18M12,12L16,16H14V18H10V16H8L12,12Z" />
+            </svg>
+            Export to Excel
+        </a>
+    </div>
 </div>
 
 <div style="grid-template-columns: 2fr 1fr; display: grid; gap: 2rem;">
