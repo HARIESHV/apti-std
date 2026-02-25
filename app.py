@@ -42,12 +42,21 @@ if not db_url:
     # Use instance folder for SQLite by default
     db_url = f"sqlite:///{os.path.join(app.instance_path, 'aptipro.db')}"
 elif db_url.startswith("postgres://"):
-    # Render's old postgres URLs need to be converted for SQLAlchemy
+    # Legacy Render postgres URLs → SQLAlchemy needs postgresql://
     db_url = db_url.replace("postgres://", "postgresql://", 1)
+elif db_url.startswith("mariadb://") or db_url.startswith("mysql://"):
+    # MariaDB / MySQL: use PyMySQL driver
+    # e.g. mariadb://user:pass@host:3306/dbname  →  mysql+pymysql://user:pass@host:3306/dbname
+    db_url = db_url.replace("mariadb://", "mysql+pymysql://", 1)
+    db_url = db_url.replace("mysql://",   "mysql+pymysql://", 1)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = db_url
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=3650) # 10 years
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(days=3650)  # 10 years
+app.config['REMEMBER_COOKIE_DURATION'] = timedelta(days=3650)    # 10-year remember-me cookie
+app.config['REMEMBER_COOKIE_SECURE'] = False   # Allow HTTP (set True if HTTPS only)
+app.config['REMEMBER_COOKIE_HTTPONLY'] = True
+app.config['SESSION_COOKIE_SAMESITE'] = 'Lax'
 
 db = SQLAlchemy(app)
 
@@ -111,6 +120,9 @@ class Question(db.Model):
     image_data = db.Column(db.LargeBinary) # Store in DB
     image_mimetype = db.Column(db.String(50))
     subject_id = db.Column(db.Integer, db.ForeignKey('subject.id'))
+    # ── Scheduled date: the calendar day students see this question.
+    # ── NULL means visible immediately (legacy / unscheduled).
+    scheduled_date = db.Column(db.Date, nullable=True, default=None)
     created_at = db.Column(db.DateTime, default=get_now_ist)
     
     answers = db.relationship('Answer', backref='question', lazy=True)
@@ -272,8 +284,11 @@ def init_db():
             # This makes every migration fully safe to re-run on every deploy.
             try:
                 with db.engine.connect() as conn:
-                    is_sqlite  = db.engine.url.drivername == 'sqlite'
-                    blob_type  = "BLOB" if is_sqlite else "BYTEA"
+                    driver     = db.engine.url.drivername          # e.g. 'sqlite', 'mysql+pymysql', 'postgresql'
+                    is_sqlite  = driver == 'sqlite'
+                    is_mysql   = 'mysql' in driver                   # covers MariaDB too
+                    # SQLite → BLOB, MariaDB/MySQL → LONGBLOB, PostgreSQL → BYTEA
+                    blob_type  = "BLOB" if is_sqlite else ("LONGBLOB" if is_mysql else "BYTEA")
 
                     def safe_alter(sql):
                         """Execute an ALTER TABLE; silently ignore if column already exists."""
@@ -284,10 +299,12 @@ def init_db():
                             pass  # Column already exists — nothing to do
 
                     # ── user ──────────────────────────────────────────────────
-                    safe_alter(f'ALTER TABLE "user" ADD COLUMN profile_image_data {blob_type}')
-                    safe_alter('ALTER TABLE "user" ADD COLUMN profile_image_mimetype VARCHAR(50)')
-                    safe_alter('ALTER TABLE "user" ADD COLUMN visible_password VARCHAR(100)')
-                    safe_alter('ALTER TABLE "user" ADD COLUMN is_active BOOLEAN DEFAULT TRUE')
+                    # MariaDB uses backtick-quoting; SQLite/PostgreSQL use double-quotes
+                    user_tbl = "`user`" if is_mysql else '"user"'
+                    safe_alter(f'ALTER TABLE {user_tbl} ADD COLUMN profile_image_data {blob_type}')
+                    safe_alter(f'ALTER TABLE {user_tbl} ADD COLUMN profile_image_mimetype VARCHAR(50)')
+                    safe_alter(f'ALTER TABLE {user_tbl} ADD COLUMN visible_password VARCHAR(100)')
+                    safe_alter(f'ALTER TABLE {user_tbl} ADD COLUMN is_active BOOLEAN DEFAULT TRUE')
 
                     # ── question ──────────────────────────────────────────────
                     safe_alter(f'ALTER TABLE question ADD COLUMN image_data {blob_type}')
@@ -298,6 +315,7 @@ def init_db():
                     safe_alter('ALTER TABLE question ADD COLUMN timer_seconds INTEGER DEFAULT 0')
                     safe_alter("ALTER TABLE question ADD COLUMN timer_display_format VARCHAR(20) DEFAULT 'days'")
                     safe_alter('ALTER TABLE question ADD COLUMN subject_id INTEGER')
+                    safe_alter('ALTER TABLE question ADD COLUMN scheduled_date DATE')
 
                     # ── answer ────────────────────────────────────────────────
                     safe_alter(f'ALTER TABLE answer ADD COLUMN file_data {blob_type}')
@@ -400,6 +418,9 @@ def login():
         
         if user and check_password_hash(user.password, password):
             try:
+                # Make the session permanent so PERMANENT_SESSION_LIFETIME applies
+                from flask import session as flask_session
+                flask_session.permanent = True
                 login_user(user, remember=True)
                 # Record detailed login log
                 ip_addr = request.headers.get('X-Forwarded-For', request.remote_addr)
@@ -522,7 +543,9 @@ def register():
             db.session.add(notif)
             db.session.commit()
             
-            # Auto-login the user
+            # Auto-login the user with permanent session
+            from flask import session as flask_session
+            flask_session.permanent = True
             login_user(new_user, remember=True)
             flash('Welcome! Your account has been created.')
             
@@ -534,7 +557,10 @@ def register():
             flash(f'Registration error: {str(e)}')
             return redirect(url_for('login', tab='register'))
             
-    return render_template('login.html', registration_open=True, tab='register')
+    # Re-check registration_open for the GET render (don't hardcode True)
+    classroom = Classroom.query.first()
+    registration_open = classroom.registration_open if classroom else True
+    return render_template('login.html', registration_open=registration_open, tab='register')
 @app.route('/history')
 @login_required
 def history():
@@ -578,7 +604,13 @@ def admin_dashboard():
 
     # Database health/type info
     try:
-        db_type = "PostgreSQL" if "postgresql" in str(db.engine.url).lower() else "SQLite"
+        url_str = str(db.engine.url).lower()
+        if "postgresql" in url_str:
+            db_type = "PostgreSQL"
+        elif "mysql" in url_str:
+            db_type = "MariaDB / MySQL"
+        else:
+            db_type = "SQLite"
     except:
         db_type = "Unknown"
 
@@ -844,8 +876,10 @@ def admin_members_dashboard():
 @login_required
 def post_question():
     if current_user.role != 'admin': return redirect(url_for('student_dashboard'))
+    # Default scheduled_date = today in IST
+    today_default = get_now_ist().date().isoformat()
     if request.method == 'GET':
-        return render_template('post_question.html')
+        return render_template('post_question.html', today_default=today_default)
     
     text = request.form.get('text')
     topic = request.form.get('topic', '')
@@ -864,6 +898,14 @@ def post_question():
     timer_seconds = request.form.get('timer_seconds', 0, type=int)
     timer_display_format = request.form.get('timer_display_format', 'days')
     
+    # Scheduled date (which day students see this question)
+    from datetime import date as _date
+    sched_str = request.form.get('scheduled_date', '').strip()
+    try:
+        scheduled_date = _date.fromisoformat(sched_str) if sched_str else get_now_ist().date()
+    except ValueError:
+        scheduled_date = get_now_ist().date()
+    
     image = request.files.get('image')
     image_data = None
     image_mimetype = None
@@ -881,11 +923,12 @@ def post_question():
         timer_days=timer_days, timer_hours=timer_hours,
         timer_minutes=timer_minutes, timer_seconds=timer_seconds,
         timer_display_format=timer_display_format,
-        image_file=image_filename, image_data=image_data, image_mimetype=image_mimetype
+        image_file=image_filename, image_data=image_data, image_mimetype=image_mimetype,
+        scheduled_date=scheduled_date
     )
     db.session.add(new_q)
     db.session.commit()
-    flash('Question posted!')
+    flash(f'Question posted for {scheduled_date.strftime("%d %b %Y")}!')
     return redirect(url_for('admin_dashboard'))
 
 @app.route('/admin/delete_question/<int:question_id>', methods=['POST', 'GET'])
@@ -1032,7 +1075,22 @@ def heartbeat():
 @login_required
 def student_dashboard():
     if current_user.role != 'student': return redirect(url_for('admin_dashboard'))
-    questions = Question.query.order_by(Question.created_at.desc()).all()
+
+    now_ist  = get_now_ist()
+    today_dt = now_ist.date()   # e.g. date(2026, 2, 25)
+    today_ist_start = now_ist.replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # ── Fetch only questions scheduled for today (or legacy unscheduled ones) ──
+    # A question is "today's" if:
+    #   • scheduled_date == today  (newly posted questions), OR
+    #   • scheduled_date is NULL and created_at is today (legacy / unscheduled)
+    all_questions = Question.query.order_by(Question.created_at.desc()).all()
+    questions = [
+        q for q in all_questions
+        if (q.scheduled_date is not None and q.scheduled_date == today_dt)
+        or (q.scheduled_date is None and q.created_at >= today_ist_start)
+    ]
+
     answers_list = Answer.query.filter_by(student_id=current_user.id).all()
     user_answers = {a.question_id: a for a in answers_list}
     attempts_list = Attempt.query.filter_by(student_id=current_user.id).all()
@@ -1040,22 +1098,16 @@ def student_dashboard():
     
     correct_count = sum(1 for a in answers_list if a.is_correct)
 
-    # Compute today's stats (based on IST midnight)
-    now_ist = get_now_ist()
-    today_ist_start = now_ist.replace(hour=0, minute=0, second=0, microsecond=0)
-    
-    today_questions = [q for q in questions if q.created_at >= today_ist_start]
-    today_question_ids = {q.id for q in today_questions}
-    
-    # Answers submitted today
-    today_answers = [a for a in answers_list if a.submitted_at >= today_ist_start and a.question_id in today_question_ids]
-    today_solved_count = len(today_answers)
-    today_total_count = len(today_questions)
+    # Today's progress — only against today's visible questions
+    today_question_ids = {q.id for q in questions}
+    today_answers = [a for a in answers_list if a.question_id in today_question_ids]
+    today_solved_count = sum(1 for a in today_answers if not a.is_expired)
+    today_total_count  = len(questions)
 
     stats = {
-        'total': len(questions),
+        'total': len(all_questions),
         'solved': len(user_answers),
-        'unsolved': len(questions) - len(user_answers),
+        'unsolved': len(all_questions) - len(user_answers),
         'correct': correct_count,
         'incorrect': len(user_answers) - correct_count,
         'accuracy': (correct_count / len(user_answers) * 100) if user_answers else 0,
@@ -1067,7 +1119,7 @@ def student_dashboard():
     classroom = Classroom.query.first()
     active_meet_links = MeetLink.query.filter_by(is_active=True).all()
 
-    # Lifetime Performance History
+    # Lifetime Performance History (all answers, not just today)
     history_map = {}
     for a in answers_list:
         if a.submitted_at:
